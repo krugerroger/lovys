@@ -3,5 +3,5 @@ export interface ProfileData {
     email: string;
     balance: number;
     username: string;
-    user_type: 'client' | 'escort';
+    user_type: 'client' | 'escort' | 'admin';
 }

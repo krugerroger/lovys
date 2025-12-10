@@ -1,4 +1,4 @@
-// app/(auth)/admin-login/page.tsx
+// app/(auth)/adminLogin/page.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -14,22 +14,6 @@ export default function AdminLoginPage() {
   })
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [rememberMe, setRememberMe] = useState(false)
-
-  // Rediriger si déjà connecté en tant qu'admin
-  useEffect(() => {
-    const checkAdmin = async () => {
-      try {
-        const response = await fetch('/api/admin/check')
-        if (response.ok) {
-          router.push('/admin/dashboard')
-        }
-      } catch (error) {
-        // Pas connecté ou pas admin
-      }
-    }
-    checkAdmin()
-  }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -58,8 +42,8 @@ export default function AdminLoginPage() {
         router.refresh()
       }, 1000)
 
-    } catch (error: any) {
-      toast.error(error.message || 'Authentication failed')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Authentication failed')
       console.error('Login error:', error)
     } finally {
       setIsLoading(false)
@@ -73,7 +57,7 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-black p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-gray-900 to-black p-4">
       {/* Background pattern */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl"></div>
@@ -84,7 +68,7 @@ export default function AdminLoginPage() {
       <div className="relative z-10 w-full max-w-md">
         {/* Logo/Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-cyan-500 to-purple-600 rounded-2xl mb-4 shadow-lg">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-linear-to-br from-cyan-500 to-purple-600 rounded-2xl mb-4 shadow-lg">
             <Shield className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Admin Portal</h1>
@@ -146,32 +130,13 @@ export default function AdminLoginPage() {
               </div>
             </div>
 
-            {/* Options */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 text-cyan-500 bg-gray-900 border-gray-700 rounded focus:ring-cyan-500 focus:ring-offset-gray-900"
-                  disabled={isLoading}
-                />
-                <span className="ml-2 text-sm text-gray-400">Remember me</span>
-              </label>
-              <button
-                type="button"
-                className="text-sm text-cyan-400 hover:text-cyan-300 transition"
-                onClick={() => toast.info('Contact system administrator')}
-              >
-                Forgot password?
-              </button>
-            </div>
+
 
             {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 px-4 bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-700 hover:to-purple-700 text-white font-semibold rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+              className="w-full py-3 px-4 bg-linear-to-r from-cyan-600 to-purple-600 hover:from-cyan-700 hover:to-purple-700 text-white font-semibold rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
             >
               {isLoading ? (
                 <div className="flex items-center justify-center">
@@ -206,21 +171,6 @@ export default function AdminLoginPage() {
           <div className="flex items-center justify-center gap-4 mt-2">
             <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
             <p className="text-xs text-gray-600">System Status: Operational</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Session timeout warning */}
-      <div className="fixed bottom-6 right-6 bg-gray-800/80 backdrop-blur-sm rounded-lg p-3 border border-gray-700 max-w-xs">
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 bg-yellow-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-            <svg className="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-white">Security Notice</p>
-            <p className="text-xs text-gray-400 mt-1">Session auto-logs out after 15 minutes of inactivity</p>
           </div>
         </div>
       </div>

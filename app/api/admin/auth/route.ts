@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       session: authData.session
     })
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Admin login error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },

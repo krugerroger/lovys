@@ -1,8 +1,9 @@
+"use client";
 import { Heart, LogOut, Star, User, Menu, X } from "lucide-react";
 import { useState } from "react";
-import RegistrationPopup from "./RegistrationPopup";
 import { useUser } from "@/app/context/userContext";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function Header() {
   const router = useRouter();
@@ -14,42 +15,42 @@ export default function Header() {
     <>
       <header className="bg-gray-800 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-gray-700">
         {/* Logo section */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="text-2xl sm:text-3xl">💋</div>
+        <Link href="/" className="flex items-center gap-2 sm:gap-3 hover:cursor-pointer">
+          <div className="text-2xl sm:text-3xl"></div>
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-pink-300">Lovys</h1>
             <p className="text-xs text-gray-400 uppercase hidden sm:block">
               Worldwide escort services
             </p>
           </div>
-        </div>
+        </Link>
 
         {/* Desktop navigation */}
         <div className="hidden md:flex items-center gap-2 lg:gap-3">
-          <button className="flex items-center gap-1 px-3 py-2 bg-gray-700 rounded hover:bg-gray-600 transition">
+          <button className="flex items-center gap-1 px-3 py-2 bg-gray-700 rounded hover:bg-gray-600 transition hover:cursor-pointer">
             <img
               src="https://flagcdn.com/w20/us.png"
               alt="US"
               className="w-5 h-3"
             />
           </button>
-          <button className="flex items-center gap-2 px-3 py-2 bg-gray-700 rounded hover:bg-gray-600 transition text-white">
+          <button className="flex items-center gap-2 px-3 py-2 bg-gray-700 rounded hover:bg-gray-600 transition text-white hover:cursor-pointer">
             <Star className="w-4 h-4" />
             <span className="text-sm hidden lg:inline">Favorite</span>
           </button>
-          <button className="flex items-center gap-2 px-3 py-2 bg-gray-700 rounded hover:bg-gray-600 transition text-white">
+          <button className="flex items-center gap-2 px-3 py-2 bg-gray-700 rounded hover:bg-gray-600 transition text-white hover:cursor-pointer">
             <Heart className="w-4 h-4" />
             <span className="text-sm hidden lg:inline">Review</span>
           </button>
           <button
-            onClick={() => {user ? router.push('/manage/ads/form') : setIsOpen(true)}}
-            className="flex items-center gap-2 px-3 lg:px-4 py-2 bg-pink-300 text-gray-900 rounded hover:bg-pink-400 transition font-medium"
+            onClick={() => {user && user.user_type === 'escort' ? router.push('/manage/ads/form') : user && user.user_type !== 'escort' ? router.push('/manage/profile') : router.push('/login')}}
+            className="flex items-center gap-2 px-3 lg:px-4 py-2 bg-pink-300 text-gray-900 rounded hover:bg-pink-400 transition font-medium hover:cursor-pointer"
           >
             <User className="w-4 h-4" />
             <span className="text-sm">Advertise</span>
             <span className="hidden lg:inline"> for $5</span>
           </button>
-          {user &&<button onClick={()=> logout()} className="p-2 bg-gray-700 rounded hover:bg-gray-600 transition text-white">
+          {user &&<button onClick={()=> logout()} className="p-2 bg-gray-700 rounded hover:bg-gray-600 transition text-white hover:cursor-pointer">
             <LogOut className="w-5 h-5" />
           </button>}
         </div>
@@ -57,7 +58,7 @@ export default function Header() {
         {/* Mobile menu button */}
         <div className="flex items-center gap-2 md:hidden">
           <button
-            onClick={() => setIsOpen(true)}
+            onClick={() => {user && user.user_type === 'escort' ? router.push('/manage/ads/form') : user && user.user_type !== 'escort' ? router.push('/manage/profile') : router.push('/login')}}
             className="flex items-center gap-1 px-3 py-2 bg-pink-300 text-gray-900 rounded hover:bg-pink-400 transition font-medium text-sm"
           >
             <User className="w-4 h-4" />
@@ -74,8 +75,6 @@ export default function Header() {
             )}
           </button>
         </div>
-
-        <RegistrationPopup isOpen={isOpen} setIsOpen={setIsOpen} />
       </header>
 
       {/* Mobile menu dropdown */}

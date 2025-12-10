@@ -16,8 +16,10 @@ import {
   Filter
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useUser } from '@/app/context/userContext'
 
 export default function AdminDashboard() {
+  const {user, logout} = useUser()
   const router = useRouter()
   const [adminData, setAdminData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -28,61 +30,62 @@ export default function AdminDashboard() {
     totalRevenue: 0,
   })
 
-  useEffect(() => {
-    fetchAdminData()
-    fetchStats()
-  }, [])
+  // useEffect(() => {
+  //   fetchAdminData()
+  //   fetchStats()
+  // }, [])
 
-  const fetchAdminData = async () => {
-    try {
-      const response = await fetch('/api/admin/check')
-      const data = await response.json()
+  // const fetchAdminData = async () => {
+  //   try {
+  //     const response = await fetch('/api/admin/check')
+  //     const data = await response.json()
 
-      if (!response.ok || !data.isAdmin) {
-        router.push('/admin-login')
-        return
-      }
+  //     if (!response.ok || !data.isAdmin) {
+  //       router.push('/adminLogin')
+  //       return
+  //     }
 
-      setAdminData(data.user)
-    } catch (error) {
-      router.push('/admin-login')
-    } finally {
-      setLoading(false)
-    }
-  }
+  //     setAdminData(data.user)
+  //   } catch (error) {
+  //     router.push('/adminLogin')
+  //   } finally {
+  //     setLoading(false)
+  //   }
+  // }
 
-  const fetchStats = async () => {
-    try {
-      const response = await fetch('/api/admin/stats')
-      const data = await response.json()
-      if (response.ok) {
-        setStats(data)
-      }
-    } catch (error) {
-      console.error('Error fetching stats:', error)
-    }
-  }
+  // const fetchStats = async () => {
+  //   try {
+  //     const response = await fetch('/api/admin/stats')
+  //     const data = await response.json()
+  //     if (response.ok) {
+  //       setStats(data)
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching stats:', error)
+  //   }
+  // }
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/admin/logout', { method: 'POST' })
-      router.push('/admin-login')
+      logout()
+      router.push('/adminLogin')
       toast.success('Logged out successfully')
+      console.log(user)
     } catch (error) {
       console.error('Logout error:', error)
     }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading admin panel...</p>
-        </div>
-      </div>
-    )
-  }
+  // if (loading) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center bg-gray-900">
+  //       <div className="text-center">
+  //         <div className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+  //         <p className="text-gray-400">Loading admin panel...</p>
+  //       </div>
+  //     </div>
+  //   )
+  // }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black">
@@ -108,7 +111,7 @@ export default function AdminDashboard() {
               </button>
               <div className="flex items-center gap-3">
                 <div className="text-right">
-                  <p className="text-sm font-medium text-white">{adminData?.email}</p>
+                  <p className="text-sm font-medium text-white">{user?.email}</p>
                   <p className="text-xs text-gray-400">Administrator</p>
                 </div>
                 <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center">
@@ -180,7 +183,7 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <button
             onClick={() => router.push('/admin/ads/pending')}
-            className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-2xl p-6 text-left transition-transform hover:-translate-y-1"
+            className="bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-2xl p-6 text-left transition-transform hover:-translate-y-1"
           >
             <div className="flex items-center justify-between mb-4">
               <AlertTriangle className="w-8 h-8 text-white" />

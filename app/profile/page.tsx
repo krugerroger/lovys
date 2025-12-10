@@ -1,8 +1,11 @@
+"use client";
 import { ProfileData } from '@/types/profile';
-import React, { useState } from 'react';
+import React, { use, useState } from 'react';
+import { useUser } from '../context/userContext';
 
 export default function ProfileSettingsPage() {
-  const [formData, setFormData] = useState<ProfileData>({
+  const {user} = useUser();
+  const [formData, setFormData] = useState({
     email: '',
     username: '',
     newPassword: '',
@@ -19,6 +22,8 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
   const handleSave = () => {
     console.log('Form data saved:', formData);
   };
+
+  console.log(user?.user_type);
 
   return (
     <div className="min-h-screen bg-gray-800">

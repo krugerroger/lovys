@@ -2,7 +2,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -56,7 +56,7 @@ export async function middleware(request: NextRequest) {
   )
 
   // Récupérer l'utilisateur authentifié
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
   const path = request.nextUrl.pathname
 
   // Routes admin - nécessitent des permissions spéciales
@@ -139,7 +139,7 @@ export async function middleware(request: NextRequest) {
   if (isAdminRoute) {
     // Si c'est une route admin, on ignore la logique normale et on applique les règles admin
     
-    if (!user) {
+    if (!session || !session.user) {
       // Pas connecté, rediriger vers login admin
       const redirectUrl = request.nextUrl.clone()
       redirectUrl.pathname = '/adminLogin'
@@ -151,15 +151,15 @@ export async function middleware(request: NextRequest) {
     try {
       const { data: userData } = await supabase
         .from('users')
-        .select('user_type, is_active')
-        .eq('id', user.id)
+        .select('user_type')
+        .eq('user_id', session.user.id)
         .single()
 
-      const isAdmin = userData?.user_type === 'admin' && userData?.is_active
+      const isAdmin = userData?.user_type === 'admin'
 
       if (!isAdmin) {
         // Pas admin, rediriger selon le type d'utilisateur
-        return handleUnauthorizedAccess(request, userData?.user_type || 'client')
+        return handleUnauthorizedAccess(request, userData?.user_type)
       }
 
       // Admin autorisé, continuer
@@ -167,7 +167,7 @@ export async function middleware(request: NextRequest) {
     } catch (error) {
       console.error('Admin check error:', error)
       const redirectUrl = request.nextUrl.clone()
-      redirectUrl.pathname = '/admin-login'
+      redirectUrl.pathname = '/adminLogin'
       redirectUrl.searchParams.set('error', 'admin_check_failed')
       return NextResponse.redirect(redirectUrl)
     }
@@ -176,7 +176,7 @@ export async function middleware(request: NextRequest) {
   // ========== LOGIQUE POUR LES ROUTES NORMALES ==========
   
   // 1. Si l'utilisateur n'est pas connecté
-  if (!user) {
+  if (!session || !session.user) {
     // Si la route n'est pas publique, rediriger vers login
     if (!isPublicRoute(path)) {
       const redirectUrl = request.nextUrl.clone()
@@ -194,10 +194,10 @@ export async function middleware(request: NextRequest) {
   const { data: userData } = await supabase
     .from('users')
     .select('user_type')
-    .eq('id', user.id)
+    .eq('user_id', session.user.id)
     .single()
 
-  const userType = userData?.user_type || user.user_metadata?.user_type || 'client'
+  const userType = userData?.user_type
 
   // 3. Vérifier les routes protégées
   for (const [route, allowedTypes] of Object.entries(protectedRoutes)) {
@@ -240,7 +240,7 @@ function handleUnauthorizedAccess(request: NextRequest, userType: string) {
     redirectUrl.pathname = '/admin/dashboard'
   } else if (userType === 'escort') {
     redirectUrl.pathname = '/manage/chat/threads'
-  } else {
+  } else if (userType === 'client') {
     redirectUrl.pathname = '/profile'
   }
   
@@ -256,7 +256,7 @@ function redirectAuthenticatedUser(request: NextRequest, userType: string) {
     redirectUrl.pathname = '/admin/dashboard'
   } else if (userType === 'escort') {
     redirectUrl.pathname = '/manage/chat/threads'
-  } else {
+  } else if (userType === 'client') {
     redirectUrl.pathname = '/profile'
   }
   

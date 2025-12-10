@@ -1,10 +1,11 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useMemo } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { ProfileData } from '@/types/profile'
 import { createClient } from '@/lib/supabase/client'
+import { AdFormData } from '@/types/adsForm'
 
 type UserContextType = {
   user: ProfileData | null
@@ -12,6 +13,7 @@ type UserContextType = {
   supabase: SupabaseClient
   refreshUser: () => Promise<void>
   logout: () => Promise<void>
+  pendingAd: AdFormData | null // Ajout pour stocker l'annonce en attente
 }
 
 const UserContext = createContext<UserContextType>({
@@ -19,82 +21,56 @@ const UserContext = createContext<UserContextType>({
   isLoading: true,
   supabase: createClient(),
   refreshUser: async () => {},
-  logout: async () => {}
+  logout: async () => {},
+  pendingAd: null // Valeur par défaut
 })
-
-// Routes publiques - mêmes que dans le middleware
-const publicRoutes = [
-  '/',
-  '/login', 
-  '/register', 
-  '/forgot-password',
-  '/reset-password',
-  '/verify-email',
-  '/ads',
-  '/ads/[id]',
-  '/search',
-  '/about',
-  '/contact',
-  '/terms',
-  '/privacy'
-]
-
-// Routes protégées avec leurs types d'utilisateurs requis
-const protectedRoutes = {
-  // Routes pour les escorts seulement
-  '/manage': 'escort',
-  '/manage/ads': 'escort',
-  '/manage/ads/form': 'escort',
-  '/manage/dashboard': 'escort',
-  '/manage/chat/threads': 'escort',
-  '/manage/payments/history': 'escort',
-  '/manage/settings': 'escort',
-  '/manage/payments': 'escort',
-  
-  // Routes pour les clients seulement
-  '/profile': 'client',
-  '/bookings': 'client',
-  '/favorites': 'client',
-  '/reviews': 'client',
-  '/messages': 'client',
-  '/settings': 'client',
-  
-  // Routes accessibles aux deux types
-  '/dashboard': ['client', 'escort'],
-  '/account': ['client', 'escort'],
-  '/notifications': ['client', 'escort'],
-}
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<ProfileData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [pendingAd, setPendingAd] = useState<AdFormData | null>(null) // État pour l'annonce
   const router = useRouter()
   const pathname = usePathname()
-  const supabase = createClient()
 
-  const fetchUserData = async () => {
-    setIsLoading(true)
+  // ⚠️ IMPORTANT : ne pas recréer supabase à chaque render
+  const supabase = useMemo(() => createClient(), [])
+
+  // Fonction pour récupérer l'annonce en attente d'un escort
+  const fetchPendingAd = async (userId: string) => {
     try {
-      const { data: { user: authUser }, error } = await supabase.auth.getUser()
-      
-      if (error) {
-        throw error
-      }
+      const { data, error } = await supabase
+        .from('pending_ads')
+        .select('*')
+        .eq('escort_id', userId)
+        .maybeSingle() // Utiliser maybeSingle() car il peut ne pas y avoir d'annonce
 
-      if (!authUser) {
-        // Pas d'utilisateur connecté
-        setUser(null)
-        
-        // Vérifier si la route actuelle est protégée
-        if (isProtectedRoute(pathname || '')) {
-          // Sauvegarder la route actuelle pour y revenir après login
-          router.push(`/login?redirect=${encodeURIComponent(pathname || '/')}`)
-        }
-        
+      if (error) {
+        console.error('Erreur lors de la récupération de l\'annonce:', error)
+        setPendingAd(null)
         return
       }
 
-      // Utilisateur connecté - récupérer les données
+      setPendingAd(data)
+    } catch (err) {
+      console.error('Failed to fetch pending ad:', err)
+      setPendingAd(null)
+    }
+  }
+
+  // ----------- RÉCUPÉRATION DES DONNÉES UTILISATEUR ----------
+  const fetchUserData = async () => {
+    setIsLoading(true)
+
+    try {
+      const { data: { user: authUser }, error } = await supabase.auth.getUser()
+
+      if (error || !authUser) {
+        setUser(null)
+        setPendingAd(null) // Réinitialiser l'annonce si pas d'utilisateur
+        return
+      }
+
+      // Récupération du profil + solde
       const [profileRes, walletRes] = await Promise.all([
         supabase.from('users').select('*').eq('user_id', authUser.id).single(),
         supabase.from('wallets').select('balance').eq('user_id', authUser.id).single(),
@@ -102,163 +78,75 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
       const userData = profileRes.data || {}
 
-      // Construction de l'objet utilisateur
-      const combinedUser: ProfileData = {
+      const finalUser: ProfileData = {
         ...userData,
-        balance: walletRes.data?.balance,
         user_id: authUser.id,
         email: authUser.email,
-        // Assurer que les champs obligatoires existent
+        balance: walletRes.data?.balance ?? 0,
         username: userData.username || authUser.email?.split('@')[0] || 'user',
-        display_name: userData.display_name || authUser.email?.split('@')[0] || 'User',
+        display_name: userData.display_name || userData.username || 'User',
         user_type: userData.user_type || 'client'
       }
 
-      setUser(combinedUser)
+      setUser(finalUser)
 
-      // Vérifier si l'utilisateur a accès à la route actuelle
-      if (pathname && !hasAccessToRoute(pathname, combinedUser.user_type)) {
-        // Rediriger vers la page appropriée selon le type d'utilisateur
-        if (combinedUser.user_type === 'escort') {
-          router.push('/manage/chat/threads')
-        } else {
-          router.push('/profile')
-        }
+      // Si l'utilisateur est un escort, récupérer son annonce en attente
+      if (userData.user_type === 'escort') {
+        await fetchPendingAd(authUser.id)
+      } else {
+        setPendingAd(null) // Réinitialiser si pas un escort
       }
 
-      // Si on est sur une page d'authentification alors qu'on est connecté, rediriger
-      const authRoutes = ['/login', '/register', '/forgot-password']
-      if (pathname && authRoutes.includes(pathname)) {
-        // Vérifier s'il y a une redirection dans l'URL
-        const searchParams = new URLSearchParams(window.location.search)
-        const redirect = searchParams.get('redirect')
-        
-        if (redirect) {
-          router.push(redirect)
-        } else {
-          // Rediriger vers la page par défaut selon le type d'utilisateur
-          if (combinedUser.user_type === 'escort') {
-            router.push('/manage/chat/threads')
-          } else {
-            router.push('/profile')
-          }
-        }
-      }
-
-    } catch (error) {
-      console.error('Failed to fetch user:', error)
+    } catch (err) {
+      console.error('Failed to fetch user:', err)
       setUser(null)
-      
-      // Seulement rediriger si on est sur une route protégée
-      if (pathname && isProtectedRoute(pathname)) {
-        router.push(`/login?redirect=${encodeURIComponent(pathname)}`)
-      }
-      
+      setPendingAd(null)
     } finally {
       setIsLoading(false)
     }
   }
 
+  // --------------------- LOGOUT -----------------------
   const logout = async () => {
     try {
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
-      
+      await supabase.auth.signOut({ scope: 'global' })
       setUser(null)
-      router.push('/')
+      setPendingAd(null) // Réinitialiser l'annonce
+      router.push('/login') // redirection propre
       router.refresh()
     } catch (error) {
-      console.error('Logout error:', error)
-      throw error
+      console.error("Logout failed:", error)
     }
   }
 
-  // Fonction pour vérifier si une route est protégée
-  const isProtectedRoute = (path: string): boolean => {
-    // La route "/" est toujours accessible
-    if (path === '/') return false
-    
-    // Vérifier les routes publiques
-    const isPublic = publicRoutes.some(route => {
-      if (route === path) return true
-      if (route.includes('[') && route.includes(']')) {
-        const pattern = route.replace(/\[.*?\]/g, '([^/]+)')
-        const regex = new RegExp(`^${pattern}$`)
-        if (regex.test(path)) return true
-      }
-      return route !== '/' && path.startsWith(route + '/')
-    })
-    
-    if (isPublic) return false
-    
-    // Si ce n'est pas public, c'est protégé
-    return true
-  }
-
-  // Fonction pour vérifier si l'utilisateur a accès à une route
-  const hasAccessToRoute = (path: string, userType: string): boolean => {
-    // La route "/" est accessible à tous
-    if (path === '/') return true
-    
-    // Vérifier les routes publiques
-    const isPublic = publicRoutes.some(route => {
-      if (route === path) return true
-      if (route.includes('[') && route.includes(']')) {
-        const pattern = route.replace(/\[.*?\]/g, '([^/]+)')
-        const regex = new RegExp(`^${pattern}$`)
-        if (regex.test(path)) return true
-      }
-      return route !== '/' && path.startsWith(route + '/')
-    })
-    
-    if (isPublic) return true
-    
-    // Vérifier les routes protégées
-    for (const [route, allowedTypes] of Object.entries(protectedRoutes)) {
-      if (path === route || path.startsWith(route + '/')) {
-        if (Array.isArray(allowedTypes)) {
-          return allowedTypes.includes(userType)
-        }
-        return allowedTypes === userType
-      }
-    }
-    
-    // Si la route n'est ni publique ni protégée, elle est considérée comme publique
-    return true
-  }
-
+  // --------------------- AUTH LISTENER ---------------------
   useEffect(() => {
     fetchUserData()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event)
-      
-      if (event === 'SIGNED_OUT') {
-        setUser(null)
-        
-        // Si on est sur une route protégée, rediriger vers login
-        if (pathname && isProtectedRoute(pathname)) {
-          router.push('/login')
-        }
-        
-      } else if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') {
-        // Rafraîchir les données utilisateur
-        await fetchUserData()
-      }
-    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event) => {
+        console.log("Auth changed:", event)
 
-    return () => {
-      subscription?.unsubscribe()
-    }
-  }, [router, supabase, pathname])
+        if (event === 'SIGNED_OUT') {
+          setUser(null)
+          setPendingAd(null)
+        } else {
+          await fetchUserData()
+        }
+      }
+    )
+
+    return () => subscription.unsubscribe()
+  }, [pathname]) // recharger après navigation à une nouvelle page
 
   return (
-    <UserContext.Provider value={{ 
-      user, 
-      isLoading, 
+    <UserContext.Provider value={{
+      user,
+      isLoading,
       supabase,
       refreshUser: fetchUserData,
-      logout
+      logout,
+      pendingAd // Ajout de l'annonce dans le contexte
     }}>
       {children}
     </UserContext.Provider>

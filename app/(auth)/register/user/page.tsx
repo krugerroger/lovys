@@ -1,21 +1,12 @@
-import { EyeOff, Eye, User, Mail, Lock, AlertCircle, CheckCircle, Star } from "lucide-react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+"use client";
 import { signUp } from "@/lib/supabase/auth-action";
+import { User, Mail, Lock, AlertCircle, CheckCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 
-export default function EscortRegistrationForm({
-  isOpen,
-  setIsOpen,
-  onBack,
-  onSwitchToLogin
-}: {
-  isOpen: boolean;
-  setIsOpen: (open: boolean) => void;
-  onBack: () => void;
-  onSwitchToLogin: () => void;
-}) {
-  const router = useRouter();
+export default function UserRegistrationForm() {
+    const router = useRouter();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -26,6 +17,7 @@ export default function EscortRegistrationForm({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAgreed, setIsAgreed] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -71,6 +63,9 @@ export default function EscortRegistrationForm({
       newErrors.confirmPassword = 'Passwords do not match';
     }
 
+    if (!isAgreed) {
+      newErrors.agreement = 'You must agree to the terms and conditions';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -89,12 +84,11 @@ export default function EscortRegistrationForm({
         formData.email,
         formData.password,
         formData.username,
-        'escort' // userType
+        'client' // userType
       );
 
       if (result.error) {
-        throw new Error(result.error.message || result.error || "Unknown error");
-
+        throw new Error(result.error);
       }
 
       if (result.success) {
@@ -109,18 +103,15 @@ export default function EscortRegistrationForm({
         } else {
           // Compte créé et directement connecté
           toast.success(
-            "Escort account created successfully! 🎉",
+            "Account created successfully! 🎉",
             {
               description: "Welcome to our platform!"
             }
           );
           
-          // Fermer la popup
-          setIsOpen(false);
           
-          // Le middleware redirigera automatiquement vers /manage/dashboard
-          router.refresh();
-
+          // Le middleware redirigera automatiquement vers /profile
+          window.location.href = window.location.href;
         }
 
         // Réinitialisation du formulaire
@@ -130,27 +121,26 @@ export default function EscortRegistrationForm({
           password: '',
           confirmPassword: ''
         });
+        setIsAgreed(false);
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration error:', error);
       
       toast.error(
         "Registration failed",
         {
-          description: error instanceof Error ? error.message : "An error occurred during registration. Please try again."
+          description: error.message || "An error occurred during registration. Please try again."
         }
       );
       
       setErrors({ 
-        submit: error instanceof Error ? error.message : "Registration failed. Please try again." 
+        submit: error.message || "Registration failed. Please try again." 
       });
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  if (!isOpen) return null;
 
   return (
     <div className="bg-linear-to-b from-gray-900 to-gray-800 flex flex-col items-center justify-center p-4">
@@ -159,27 +149,15 @@ export default function EscortRegistrationForm({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-stretch">
           {/* Left Side - Form */}
           <div className="bg-gray-800/80 backdrop-blur-lg rounded-2xl p-8 md:p-10 border border-gray-700/50 shadow-2xl">
-            <div className="mb-8">
-              <div className="w-16 h-16 bg-linear-to-br from-pink-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <Star className="w-8 h-8 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold text-white text-center mb-2">
-                Create Escort Account
-              </h2>
-              <p className="text-gray-400 text-center text-sm">
-                Join our professional platform
-              </p>
-            </div>
-
             <form onSubmit={handleSubmit} className="space-y-7">
               {/* Username */}
               <div>
-                <label className="block text-white text-sm font-medium mb-3">
-                  Username <span className="text-red-500">*</span>
+                <label className="block text-white text-sm font-medium">
+                  Your name or nickname <span className="text-red-500">*</span>
                 </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="w-5 h-5 text-gray-500 group-focus-within:text-pink-400 transition-colors" />
+                    <User className="w-5 h-5 text-gray-500 group-focus-within:text-blue-400 transition-colors" />
                   </div>
                   <input
                     type="text"
@@ -187,7 +165,7 @@ export default function EscortRegistrationForm({
                     value={formData.username}
                     onChange={handleChange}
                     placeholder="Choose a username"
-                    className={`w-full pl-10 pr-4 py-3.5 bg-gray-900/70 border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-200 hover:border-gray-500 ${
+                    className={`w-full pl-10 pr-4 py-3.5 bg-gray-900/70 border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-500 ${
                       errors.username ? 'border-red-500' : 'border-gray-600'
                     }`}
                   />
@@ -202,12 +180,12 @@ export default function EscortRegistrationForm({
 
               {/* Email */}
               <div>
-                <label className="block text-white text-sm font-medium mb-3">
+                <label className="block text-white text-sm font-medium">
                   Email Address <span className="text-red-500">*</span>
                 </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="w-5 h-5 text-gray-500 group-focus-within:text-pink-400 transition-colors" />
+                    <Mail className="w-5 h-5 text-gray-500 group-focus-within:text-blue-400 transition-colors" />
                   </div>
                   <input
                     type="email"
@@ -215,7 +193,7 @@ export default function EscortRegistrationForm({
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="your.email@example.com"
-                    className={`w-full pl-10 pr-4 py-3.5 bg-gray-900/70 border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-200 hover:border-gray-500 ${
+                    className={`w-full pl-10 pr-4 py-3.5 bg-gray-900/70 border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-500 ${
                       errors.email ? 'border-red-500' : 'border-gray-600'
                     }`}
                   />
@@ -230,12 +208,12 @@ export default function EscortRegistrationForm({
 
               {/* Password */}
               <div>
-                <label className="block text-white text-sm font-medium mb-3">
+                <label className="block text-white text-sm font-medium">
                   Password <span className="text-red-500">*</span>
                 </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="w-5 h-5 text-gray-500 group-focus-within:text-pink-400 transition-colors" />
+                    <Lock className="w-5 h-5 text-gray-500 group-focus-within:text-blue-400 transition-colors" />
                   </div>
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -243,7 +221,7 @@ export default function EscortRegistrationForm({
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Create a secure password"
-                    className={`w-full pl-10 pr-12 py-3.5 bg-gray-900/70 border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-200 hover:border-gray-500 ${
+                    className={`w-full pl-10 pr-12 py-3.5 bg-gray-900/70 border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-500 ${
                       errors.password ? 'border-red-500' : 'border-gray-600'
                     }`}
                   />
@@ -253,9 +231,14 @@ export default function EscortRegistrationForm({
                     className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-800/50"
                   >
                     {showPassword ? (
-                      <EyeOff className="w-5 h-5" />
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L6.59 6.59m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      </svg>
                     ) : (
-                      <Eye className="w-5 h-5" />
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
                     )}
                   </button>
                 </div>
@@ -269,12 +252,12 @@ export default function EscortRegistrationForm({
 
               {/* Confirm Password */}
               <div>
-                <label className="block text-white text-sm font-medium mb-3">
+                <label className="block text-white text-sm font-medium">
                   Confirm Password <span className="text-red-500">*</span>
                 </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="w-5 h-5 text-gray-500 group-focus-within:text-pink-400 transition-colors" />
+                    <Lock className="w-5 h-5 text-gray-500 group-focus-within:text-blue-400 transition-colors" />
                   </div>
                   <input
                     type={showConfirmPassword ? 'text' : 'password'}
@@ -282,7 +265,7 @@ export default function EscortRegistrationForm({
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="Re-enter your password"
-                    className={`w-full pl-10 pr-12 py-3.5 bg-gray-900/70 border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-200 hover:border-gray-500 ${
+                    className={`w-full pl-10 pr-12 py-3.5 bg-gray-900/70 border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-500 ${
                       errors.confirmPassword ? 'border-red-500' : 'border-gray-600'
                     }`}
                   />
@@ -292,9 +275,14 @@ export default function EscortRegistrationForm({
                     className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-800/50"
                   >
                     {showConfirmPassword ? (
-                      <EyeOff className="w-5 h-5" />
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L6.59 6.59m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      </svg>
                     ) : (
-                      <Eye className="w-5 h-5" />
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
                     )}
                   </button>
                 </div>
@@ -311,7 +299,7 @@ export default function EscortRegistrationForm({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-4 bg-linear-to-r from-pink-500 to-pink-600 text-white rounded-xl hover:from-pink-600 hover:to-pink-700 transition-all duration-300 font-bold text-lg shadow-lg hover:shadow-xl hover:shadow-pink-500/20 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-linear-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 font-bold text-lg shadow-lg hover:shadow-xl hover:shadow-blue-500/20 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
                     <>
@@ -320,8 +308,8 @@ export default function EscortRegistrationForm({
                     </>
                   ) : (
                     <>
-                      <Star className="w-5 h-5" />
-                      Create Escort Account
+                      <User className="w-5 h-5" />
+                      Create My Account
                     </>
                   )}
                 </button>
@@ -336,12 +324,11 @@ export default function EscortRegistrationForm({
                 )}
               </div>
             </form>
-
             <div className="mt-8 pt-6 border-t border-gray-700/50 text-center">
               <p className="text-gray-400 text-sm">
                 Already have an account?{' '}
                 <button
-                  onClick={onSwitchToLogin}
+                  onClick={() => router.push('/login')}
                   className="text-pink-400 hover:text-pink-300 font-medium underline transition-colors"
                 >
                   Sign in here
@@ -356,19 +343,33 @@ export default function EscortRegistrationForm({
               <div className="space-y-8">
                 <div>
                   <h3 className="text-2xl font-bold text-white mb-6">
-                    Benefits for Escorts
+                    Benefits for Clients
                   </h3>
                   <div className="space-y-6">
                     <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 bg-pink-500/20 rounded-lg flex items-center justify-center shrink-0">
-                        <svg className="w-5 h-5 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center shrink-0">
+                        <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                         </svg>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-white text-lg mb-1">Quick Setup</h4>
+                        <h4 className="font-semibold text-white text-lg mb-1">Free Private Chat</h4>
                         <p className="text-gray-300">
-                          Get started in minutes with our simple registration process.
+                          Communicate directly with service providers in a secure environment.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center shrink-0">
+                        <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-white text-lg mb-1">Verified Profiles</h4>
+                        <p className="text-gray-300">
+                          Browse through verified and trusted service providers.
                         </p>
                       </div>
                     </div>
@@ -376,27 +377,13 @@ export default function EscortRegistrationForm({
                     <div className="flex items-start gap-4">
                       <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center shrink-0">
                         <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-white text-lg mb-1">Unlimited Adverts</h4>
+                        <h4 className="font-semibold text-white text-lg mb-1">Secure Platform</h4>
                         <p className="text-gray-300">
-                          Post as many advertisements as you need for your services.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center shrink-0">
-                        <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-white text-lg mb-1">Large Client Base</h4>
-                        <p className="text-gray-300">
-                          Access thousands of verified clients looking for services.
+                          Your privacy and security are our top priority.
                         </p>
                       </div>
                     </div>
@@ -405,22 +392,6 @@ export default function EscortRegistrationForm({
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Footer avec lien de connexion */}
-        <div className="mt-8 text-center">
-          <p className="text-gray-400 text-sm">
-            Already have an account?{' '}
-            <button
-              onClick={onSwitchToLogin}
-              className="text-pink-400 hover:text-pink-300 font-medium underline transition-colors"
-            >
-              Sign in to your account
-            </button>
-          </p>
-          <p className="text-gray-500 text-xs mt-2">
-            By registering, you agree to our Terms of Service and Privacy Policy
-          </p>
         </div>
       </div>
     </div>

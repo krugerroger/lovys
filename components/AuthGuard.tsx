@@ -26,6 +26,8 @@ export default function AuthGuard({
         // Rediriger vers la page appropriée
         if (user.user_type === 'escort') {
           router.push('/manage/chat/threads')
+        } else if (user.user_type === 'admin') {
+          router.push('/admin/dashboard')
         } else {
           router.push('/profile')
         }

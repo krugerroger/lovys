@@ -17,7 +17,7 @@ export interface Database {
     city: string;
   };
 
-  physical_details: {
+  physicalDetails: {
     age: number;
     height: number;
     weight: number;
@@ -59,7 +59,7 @@ export type AdInsert = {
     city: string;
   };
 
-  physical_details: {
+  physicalDetails: {
     age: number;
     height: number;
     weight: number;
@@ -107,7 +107,7 @@ export type AdUpdate = {
     city: string;
   };
 
-  physical_details?: {
+  physicalDetails?: {
     age: number;
     height: number;
     weight: number;

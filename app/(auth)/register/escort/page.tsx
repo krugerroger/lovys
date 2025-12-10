@@ -1,20 +1,11 @@
+"use client";
 import { EyeOff, Eye, User, Mail, Lock, AlertCircle, CheckCircle, Star } from "lucide-react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { signUp } from "@/lib/supabase/auth-action";
+import { useRouter } from "next/navigation";
 
-export default function EscortRegistrationForm({
-  isOpen,
-  setIsOpen,
-  onBack,
-  onSwitchToLogin
-}: {
-  isOpen: boolean;
-  setIsOpen: (open: boolean) => void;
-  onBack: () => void;
-  onSwitchToLogin: () => void;
-}) {
+export default function EscortRegistrationForm() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     username: '',
@@ -115,9 +106,6 @@ export default function EscortRegistrationForm({
             }
           );
           
-          // Fermer la popup
-          setIsOpen(false);
-          
           // Le middleware redirigera automatiquement vers /manage/dashboard
           router.refresh();
 
@@ -150,7 +138,6 @@ export default function EscortRegistrationForm({
     }
   };
 
-  if (!isOpen) return null;
 
   return (
     <div className="bg-linear-to-b from-gray-900 to-gray-800 flex flex-col items-center justify-center p-4">
@@ -341,7 +328,7 @@ export default function EscortRegistrationForm({
               <p className="text-gray-400 text-sm">
                 Already have an account?{' '}
                 <button
-                  onClick={onSwitchToLogin}
+                  onClick={() => router.push('/login')}
                   className="text-pink-400 hover:text-pink-300 font-medium underline transition-colors"
                 >
                   Sign in here
@@ -405,22 +392,6 @@ export default function EscortRegistrationForm({
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Footer avec lien de connexion */}
-        <div className="mt-8 text-center">
-          <p className="text-gray-400 text-sm">
-            Already have an account?{' '}
-            <button
-              onClick={onSwitchToLogin}
-              className="text-pink-400 hover:text-pink-300 font-medium underline transition-colors"
-            >
-              Sign in to your account
-            </button>
-          </p>
-          <p className="text-gray-500 text-xs mt-2">
-            By registering, you agree to our Terms of Service and Privacy Policy
-          </p>
         </div>
       </div>
     </div>

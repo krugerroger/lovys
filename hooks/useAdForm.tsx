@@ -1,110 +1,141 @@
 "use client";
 
-import { createAd } from "@/lib/supabase/action/createAd";
+import { useState, useCallback, Dispatch, SetStateAction } from "react";
 import { AdFormData, PhysicalDetails, Rates, ServiceData } from "@/types/adsForm";
-import { useState, useEffect, useCallback, Dispatch, SetStateAction } from "react";
-import { toast } from "sonner";
+import { Form } from "lucide-react";
 
-export const useAdForm = ({ formData, setFormData }: { formData: AdFormData; setFormData: Dispatch<SetStateAction<AdFormData>>}) => {
-
-
+export const useAdForm = ({ 
+  adData, 
+  setadData 
+}: { 
+  adData: AdFormData; 
+  setadData: Dispatch<SetStateAction<AdFormData>>
+}) => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
-
 
   // Validation du formulaire
   const validateForm = useCallback((): boolean => {
     const newErrors: Record<string, string> = {};
 
-    // Validation des champs requis
-    if (!formData.title.trim()) newErrors.title = 'Title is required';
-    if (!formData.location.country) newErrors.country = 'Country is required';
-    if (!formData.location.city) newErrors.city = 'City is required';
-    if (formData.physicalDetails.age < 18 || !formData.physicalDetails.age) newErrors.age = 'Must be at least 18 years old';
-    if (formData.physicalDetails.height <= 0) newErrors.height = 'Height is required';
-    if (formData.physicalDetails.weight <= 0) newErrors.weight = 'Weight is required';
-    if (!formData.physicalDetails.bust.trim()) newErrors.bust = 'Bust is required';
-    if (!formData.rates.oneHour || formData.rates.oneHour <= 0) newErrors.oneHour = '1 hour rate is required';
-    if (!formData.description.trim()) newErrors.description = 'Description is required';
+    if (!adData.title.trim()) newErrors.title = 'Title is required';
+    if (!adData.location?.country) newErrors.country = 'Country is required';
+    if (!adData.location?.city) newErrors.city = 'City is required';
+    if (adData.physicalDetails?.age < 18) newErrors.age = 'Must be at least 18 years old';
+    if (adData.physicalDetails?.height <= 0) newErrors.height = 'Height is required';
+    if (adData.physicalDetails?.weight <= 0) newErrors.weight = 'Weight is required';
+    if (!adData.physicalDetails?.bust) newErrors.bust = 'Bust is required';
+    if (!adData.rates?.oneHour || adData.rates.oneHour <= 0) newErrors.oneHour = '1 hour rate is required';
+    if (!adData.description?.trim()) newErrors.description = 'Description is required';
+    if (!adData.images || adData.images.length === 0) newErrors.images = 'At least one image is required';
     
-    // Validation du téléphone si fourni
-    const phone = formData.contacts.phone;
-    if (phone && !/^\+[1-9]\d{1,14}$/.test(phone)) {
-      newErrors.phone = 'Invalid phone format';
+    // Validation taille des images
+    if (adData.images?.some(img => img.size > 5 * 1024 * 1024)) {
+      newErrors.images = 'Each image must be less than 5MB';
+    }
+    
+    // Validation vidéo optionnelle
+    if (adData.video && adData.video.size > 15 * 1024 * 1024) {
+      newErrors.video = 'Video must be less than 15MB';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [formData]);
+  }, [adData]);
 
-  // Sauvegarde automatique en brouillon
-  const autoSave = useCallback(async () => {
-    if (!validateForm()) return;
-    
-    try {
-      const draftData = {
-        ...formData,
-        images: [], // Ne pas sauvegarder les fichiers dans localStorage
-      };
-      
-      localStorage.setItem('ad_draft', JSON.stringify(draftData));
-    } catch (error) {
-      console.error('Auto-save failed:', error);
-    }
-  }, [formData, validateForm]);
-
-  // Upload d'un fichier
-  const uploadFile = async (file: File, folder: string): Promise<string> => {
-    // Pour l'instant, simuler l'upload - à remplacer par votre logique d'upload
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(`https://example.com/${folder}/${file.name}`);
-      }, 1000);
-    });
-  };
-
-  const submitAd = async () => {
-    setIsSubmitting(true)
-    setErrors({})
-    
-    try {
-       const response = await fetch('/api/ads/createAds', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to submit ad')
-      }
- return {
-        success: true,
-        data: result
-      }
-
-    } catch (error: any) {
-      console.error('Submit error:', error)
-      return {
-        success: false,
-        error: error.message
-      }
-    } finally {
-      setIsSubmitting(false)
-    }
+const submitAd = async () => {
+  if (!validateForm()) {
+    return {
+      success: false,
+      error: 'Validation failed'
+    };
   }
 
-  // Gestionnaire de changement générique
+  setIsSubmitting(true);
+  setErrors({});
+
+  try {
+    // 1. Préparer les données pour l'API
+    const formData = new FormData();
+    formData.append('escort_id', '');
+    formData.append('title', adData.title);
+    formData.append('email', '');
+    formData.append('username', adData.username);
+    formData.append('location_country', adData.location.country || '');
+    formData.append('location_city', adData.location.city || '');
+    formData.append('physicalAge', adData.physicalDetails.age.toString());
+    formData.append('physicalAge', adData.physicalDetails.age.toString());
+    formData.append('physicalHeight', adData.physicalDetails.height.toString());
+    formData.append('physicalWeight', adData.physicalDetails.weight.toString());
+    formData.append('physicalBust', adData.physicalDetails.bust.toString());
+    formData.append('currency', adData.currency);
+    formData.append('ratesThirtyMinutes', adData.rates.thirtyMinutes?.toString() || '');
+    formData.append('ratesOneHour', adData.rates.oneHour?.toString() || '');
+    formData.append('ratesTwoHours', adData.rates.twoHours?.toString() || '');
+    formData.append('ratesOvernight', adData.rates.fullNight?.toString() || '');
+    formData.append('servicesEnabled', adData.services.enabled ? 'true' : 'false');
+    formData.append('servicesPrice', adData.services.price?.toString() || '');
+    formData.append('servicesComment', adData.services.comment?.toString() || '');
+    formData.append('contactsPhoneNumber', adData.contacts.phoneNumber || '');
+    formData.append('contactsWhatsapp', adData.contacts.whatsapp || '');
+    formData.append('contactsTelegram', adData.contacts.telegram || '');
+    formData.append('contactsInstagram', adData.contacts.instagram || '');
+    formData.append('contactsTwitch', adData.contacts.twitch || '');
+    formData.append('contactsFansly', adData.contacts.fansly || '');
+    formData.append('contactsOnlyfans', adData.contacts.onlyfans || '');
+    formData.append('contactsTwitter', adData.contacts.twitter || '');
+    formData.append('contactsSignal', adData.contacts.signal || '');
+    formData.append('description', adData.description);
+      if (adData.categories.length > 0) {
+    formData.append('categories', adData.categories.join('|'));
+  } else {
+    formData.append('categories', '');
+  }
+
+    adData.images.forEach((image) => {
+      formData.append('images', image);
+    });
+
+    if (adData.video) {
+      formData.append('video', adData.video, adData.video.name);
+    }
+
+    const response = await fetch('/api/ads/createAds', {
+      method: 'POST',
+      body: formData
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to submit ad');
+    }
+
+    return {
+      success: true,
+      data: result
+    };
+
+  } catch (error) {
+    console.log('Submit error:', error);
+    
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+
+  // ... reste des fonctions de gestion (handleChange, etc.) inchangées
   const handleChange = useCallback((field: keyof AdFormData, value: any) => {
-    setFormData(prev => ({
+    setadData(prev => ({
       ...prev,
       [field]: value
     }));
     
-    // Effacer l'erreur du champ modifié
     if (errors[field]) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -114,9 +145,8 @@ export const useAdForm = ({ formData, setFormData }: { formData: AdFormData; set
     }
   }, [errors]);
 
-  // Gestion des détails physiques
   const handlePhysicalDetailsChange = useCallback((field: keyof PhysicalDetails, value: string | number) => {
-    setFormData(prev => ({
+    setadData(prev => ({
       ...prev,
       physicalDetails: {
         ...prev.physicalDetails,
@@ -133,9 +163,8 @@ export const useAdForm = ({ formData, setFormData }: { formData: AdFormData; set
     }
   }, [errors]);
 
-  // Gestion des tarifs
   const handleRateChange = useCallback((field: keyof Rates, value: number) => {
-    setFormData(prev => ({
+    setadData(prev => ({
       ...prev,
       rates: {
         ...prev.rates,
@@ -152,9 +181,8 @@ export const useAdForm = ({ formData, setFormData }: { formData: AdFormData; set
     }
   }, [errors]);
 
-  // Gestion des services
   const handleServiceToggle = useCallback((key: string, enabled: boolean) => {
-    setFormData(prev => ({
+    setadData(prev => ({
       ...prev,
       services: {
         ...prev.services,
@@ -169,7 +197,7 @@ export const useAdForm = ({ formData, setFormData }: { formData: AdFormData; set
   }, []);
 
   const handleServiceChange = useCallback((key: string, field: keyof ServiceData, value: string | number) => {
-    setFormData(prev => ({
+    setadData(prev => ({
       ...prev,
       services: {
         ...prev.services,
@@ -181,9 +209,8 @@ export const useAdForm = ({ formData, setFormData }: { formData: AdFormData; set
     }));
   }, []);
 
-  // Gestion des contacts
   const handleContactChange = useCallback((fieldId: string, value: string) => {
-    setFormData(prev => ({
+    setadData(prev => ({
       ...prev,
       contacts: {
         ...prev.contacts,
@@ -200,9 +227,8 @@ export const useAdForm = ({ formData, setFormData }: { formData: AdFormData; set
     }
   }, [errors]);
 
-  // Gestion des catégories
   const handleCategoryToggle = useCallback((category: string, checked: boolean) => {
-    setFormData(prev => ({
+    setadData(prev => ({
       ...prev,
       categories: checked 
         ? [...prev.categories, category]
@@ -210,22 +236,19 @@ export const useAdForm = ({ formData, setFormData }: { formData: AdFormData; set
     }));
   }, []);
 
-  // Gestion des fichiers
   const handleFileUpload = useCallback((files: FileList, type: 'images' | 'video') => {
     const fileArray = Array.from(files);
     
     if (type === 'images') {
-      // Limiter à 3 images
-      const newImages = [...formData.images, ...fileArray].slice(0, 3);
+      const newImages = [...adData.images, ...fileArray].slice(0, 3);
       handleChange('images', newImages);
     } else if (type === 'video') {
-      // Limiter à 1 vidéo
       handleChange('video', fileArray[0]);
     }
-  }, [formData.images, handleChange]);
+  }, [adData.images, handleChange]);
 
   return {
-    formData,
+    adData,
     errors,
     isSubmitting,
     handleChange,
@@ -238,6 +261,5 @@ export const useAdForm = ({ formData, setFormData }: { formData: AdFormData; set
     handleFileUpload,
     submitAd,
     validateForm,
-    autoSave
   };
 };

@@ -38,15 +38,39 @@ export type ServiceData = {
   price?: number;
   comment?: string;
 };
+export type ContactCategory ={
+    phoneNumber: string;
+    whatsapp?: string;
+    telegram?: string;
+    instagram?: string;
+    twitch?: string;
+    fansly?: string;
+    onlyfans?: string;
+    twitter?: string;
+    signal?: string;
+}
 
 export type AdFormData = {
+  escort_id: string;
   title: string;
+  email: string;
+  username: string;
   location: Location;
   physicalDetails: PhysicalDetails;
   currency: string;
   rates: Rates;
   services: Record<string, ServiceData>;
-  contacts: Record<string, string>;
+  contacts: {
+    phoneNumber: string;
+    whatsapp?: string;
+    telegram?: string;
+    instagram?: string;
+    twitch?: string;
+    fansly?: string;
+    onlyfans?: string;
+    twitter?: string;
+    signal?: string;
+}
   description: string;
   categories: string[];
   images: File[];
@@ -57,6 +81,12 @@ export type Location = {
   country: string;
   city: string;
 };
+
+// export type Contacts = {
+//   phone: string;
+//   telegram: string;
+//   whatsapp: string;
+// };
 
 export type ContactField = {
   id: string;
