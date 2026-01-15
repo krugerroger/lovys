@@ -1,15 +1,14 @@
 // app/api/blacklist/[blocked_user_id]/route.ts
 import { createClient } from '@/lib/supabase/client';
-import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { blocked_user_id: string } }
-) {
+  context: { params: Promise<{ blocked_user_id: string }> }
+): Promise<NextResponse> {
   try {
     const supabase = createClient();
-    const blockedUserId = params.blocked_user_id;
+    const blockedUserId = (await context.params).blocked_user_id;
     
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {

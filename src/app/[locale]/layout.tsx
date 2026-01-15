@@ -5,6 +5,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { UserProvider } from "./context/userContext";
 import { Providers } from "./providers";
+import { ReactNode } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +33,7 @@ export function generateStaticParams() {
   ];
 }
 
-export default async function LocaleLayout({ params, children }: { params: Promise<{ locale: string }>, children: ReactElement }) {
+export default async function LocaleLayout({ params, children }: { params: Promise<{ locale: string }>, children: ReactNode  }) {
   const { locale } = await params
   
   return (

@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/client';
 import { MapPin, Crown, TrendingUp, Star } from 'lucide-react';
 import Link from 'next/link';
 import { getScopedI18n } from '../../../../../locales/server';
+import { setStaticParamsLocale } from 'next-international/server';
+import { Metadata } from 'next';
 
 // Fonction pour formater le slug en nom de ville
 const formatCityName = (slug: string) => {
@@ -156,20 +158,26 @@ export async function generateStaticParams() {
   return params;
 }
 
-// Metadata dynamique
-export async function generateMetadata({ params }: PageProps) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; city: string }>;
+}): Promise<Metadata> {
   const { locale, city } = await params;
-  const t = await getScopedI18n('Escorts');
-  const cityName = formatCityName(city);
   
   return {
-    title: `Escorts à ${cityName} | Annonces vérifiées`,
-    description: `Trouvez les meilleures escorts à ${cityName}. Annonces vérifiées, photos réelles, tarifs transparents.`,
+    title: `Escorts à ${city} | VotreSite`,
+    description: `Trouvez des escortes à ${city}. Profitez de nos services...`,
+    openGraph: {
+      title: `Escorts à ${city}`,
+      description: `Escortes disponibles à ${city}`,
+    },
   };
 }
 
 export default async function CityEscortsPage({ params }: PageProps) {
   const { locale, city } = await params;
+  setStaticParamsLocale(locale); // ← CETTE LIGNE EST CRITIQUE
   const t = await getScopedI18n('Escorts');
   const cityName = formatCityName(city);
   

@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/client';
 import { Tag, MapPin, Users, Filter, Check, Sparkles, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { getScopedI18n } from '../../../../../../locales/server';
+import { setStaticParamsLocale } from 'next-international/server';
+import { Metadata } from 'next';
 
 // Fonction pour formater le nom de la catégorie (ALGORITHME - PAS TOUCHÉ)
 const formatCategoryName = (slug: string) => {
@@ -83,21 +85,26 @@ export async function generateStaticParams() {
   return params;
 }
 
-// Metadata dynamique
-export async function generateMetadata({ params }: PageProps) {
-  const { locale, categorie } = await params;
-  const t = await getScopedI18n('Escorts');
-  const categoryName = formatCategoryName(categorie);
-  const category = availableCategories.find(cat => cat.key === categorie);
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; city: string }>;
+}): Promise<Metadata> {
+  const { locale, city } = await params;
   
   return {
-    title: `Escorts ${categoryName} | Annonces vérifiées`,
-    description: category?.description || `Trouvez les meilleures escorts ${categoryName.toLowerCase()}. Annonces vérifiées, photos réelles, tarifs transparents.`,
+    title: `Escorts à ${city} | VotreSite`,
+    description: `Trouvez des escortes à ${city}. Profitez de nos services...`,
+    openGraph: {
+      title: `Escorts à ${city}`,
+      description: `Escortes disponibles à ${city}`,
+    },
   };
 }
 
 export default async function CategoryEscortsPage({ params }: PageProps) {
   const { locale, categorie } = await params;
+  setStaticParamsLocale(locale); // ← CETTE LIGNE EST CRITIQUE
   const t = await getScopedI18n('Escorts');
   const categoryName = formatCategoryName(categorie);
   const currentCategory = availableCategories.find(cat => cat.key === categorie);
