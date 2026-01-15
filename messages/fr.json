@@ -1,0 +1,236 @@
+{
+  "HomePage": {
+    "hero": {
+      "title": "Trouvez les meilleures escorts en ",
+      "subtitle": "Plateforme de confiance avec plus de 1,765,491 avis vérifiés"
+    },
+    "search": {
+      "title": "Rechercher une escort",
+      "city": {
+        "label": "Ville",
+        "placeholder": "Sélectionner une ville",
+        "filterPlaceholder": "Filtrer les villes...",
+        "noResults": "Aucune ville trouvée pour \"{search}\"",
+        "recent": "RÉCENTS",
+        "seeAllCities": "Voir toutes les villes →",
+        "popularBadge": "Ville populaire",
+        "availableBadge": "Disponible"
+      },
+      "language": {
+        "label": "🌍 Langue",
+        "placeholder": "Choisir la langue"
+      },
+      "searchButton": {
+        "withCity": "RECHERCHER À {city}",
+        "withoutCity": "SÉLECTIONNEZ UNE VILLE"
+      },
+      "trustBadges": {
+        "secure": "Vérification sécurisée",
+        "reviews": "Avis authentiques"
+      }
+    },
+    "categories": {
+      "title": "Catégories populaires",
+      "list": {
+        "vip": "Escort VIP",
+        "companion": "Compagnie",
+        "massage": "Massage",
+        "outcall": "Outcall",
+        "incall": "Incall",
+        "new": "Nouvelles escorts",
+        "verified": "Profils vérifiés",
+        "independent": "Indépendantes",
+        "agencies": "Agences",
+        "duo": "Duo/Trio"
+      }
+    },
+    "popularCities": {
+      "title": "Villes populaires",
+      "stats": {
+        "frenchCities": "Villes en France",
+        "popularCities": "Villes populaires"
+      },
+      "exploreAll": "Explorer toutes les villes"
+    },
+    "recentSearches": {
+      "title": "Recherches récentes"
+    },
+    "featuredEscorts": {
+      "title": "Escorts en vedette",
+      "viewAll": "Voir toutes",
+      "loading": "Chargement...",
+      "empty": {
+        "title": "Aucune escort disponible",
+        "description": "Les annonces seront bientôt disponibles"
+      }
+    },
+    "regions": {
+      "title": "Découvrez par région",
+      "citiesCount": "villes",
+      "seeCity": "Voir {city} →",
+      "list": {
+        "ileDeFrance": "Île-de-France",
+        "paca": "Provence-Alpes-Côte d'Azur",
+        "auvergneRhoneAlpes": "Auvergne-Rhône-Alpes",
+        "occitanie": "Occitanie",
+        "nouvelleAquitaine": "Nouvelle-Aquitaine",
+        "hautsDeFrance": "Hauts-de-France"
+      }
+    },
+    "stats": {
+      "verifiedReviews": "Avis vérifiés",
+      "citiesCovered": "Villes couvertes",
+      "customerSupport": "Support client",
+      "verifiedAds": "Annonces vérifiées"
+    },
+    "footer": {
+      "terms": "En utilisant ce site, vous acceptez nos",
+      "copyright": "© 2025 Lovira - Tous droits réservés. Service réservé aux adultes (+18 ans).",
+      "termsLink": "conditions d'utilisation",
+      "privacyLink": "politique de confidentialité"
+    },
+  "ClientProfile": {
+    "Chat": {
+      "title": "Messages",
+      "conversations": {
+        "searchPlaceholder": "Rechercher une conversation...",
+        "noConversations": "Aucune conversation",
+        "noConversationsDescription": "Commencez une nouvelle conversation pour discuter",
+        "newConversation": "Nouvelle conversation",
+        "youPrefix": "Vous: ",
+        "unreadCount": "{count, plural, one {# message non lu} other {# messages non lus}}",
+        "today": "Aujourd'hui",
+        "yesterday": "Hier",
+        "unknownDate": "Date inconnue",
+        "online": "En ligne",
+        "offline": "Hors ligne",
+        "viewConversations": "Voir les conversations"
+      },
+      "chat": {
+        "noConversationSelected": "Aucune conversation sélectionnée",
+        "noConversationSelectedDescription": "Sélectionnez une conversation pour commencer à discuter",
+        "noMessages": "Aucun message",
+        "firstMessagePrompt": "Envoyez votre premier message !",
+        "openingConversation": "Ouverture de la conversation...",
+        "pleaseWait": "Veuillez patienter",
+        "typingPlaceholder": "Écrivez votre message...",
+        "sendButton": "Envoyer",
+        "sending": "Envoi en cours..."
+      },
+      "userTypes": {
+        "escort": "Escort",
+        "client": "Client",
+        "admin": "Administrateur"
+      },
+      "errors": {
+        "notAuthenticated": "Vous devez être connecté pour accéder aux messages",
+        "clientsOnly": "Seuls les clients peuvent contacter des escorts",
+        "escortNotFound": "Escort non trouvé",
+        "conversationExists": "La conversation existe déjà",
+        "sendMessageError": "Erreur lors de l'envoi du message",
+        "loadError": "Erreur lors du chargement",
+        "markReadError": "Erreur lors du marquage comme lu"
+      },
+      "loading": {
+        "conversations": "Chargement des conversations...",
+        "messages": "Chargement des messages..."
+      }
+    }
+  }
+  },
+  "ClientProfile": {
+    "Chat": {
+      "title": "Messages",
+      "conversations": {
+        "searchPlaceholder": "Rechercher une conversation...",
+        "noConversations": "Aucune conversation",
+        "noConversationsDescription": "Commencez une nouvelle conversation pour discuter",
+        "newConversation": "Nouvelle conversation",
+        "youPrefix": "Vous: ",
+        "unreadCount": "{count, plural, one {# message non lu} other {# messages non lus}}",
+        "today": "Aujourd'hui",
+        "yesterday": "Hier",
+        "unknownDate": "Date inconnue",
+        "online": "En ligne",
+        "offline": "Hors ligne",
+        "viewConversations": "Voir les conversations"
+      },
+      "chat": {
+        "noConversationSelected": "Aucune conversation sélectionnée",
+        "noConversationSelectedDescription": "Sélectionnez une conversation pour commencer à discuter",
+        "noMessages": "Aucun message",
+        "firstMessagePrompt": "Envoyez votre premier message !",
+        "openingConversation": "Ouverture de la conversation...",
+        "pleaseWait": "Veuillez patienter",
+        "typingPlaceholder": "Écrivez votre message...",
+        "sendButton": "Envoyer",
+        "sending": "Envoi en cours..."
+      },
+      "userTypes": {
+        "escort": "Escort",
+        "client": "Client",
+        "admin": "Administrateur"
+      },
+      "errors": {
+        "notAuthenticated": "Vous devez être connecté pour accéder aux messages",
+        "clientsOnly": "Seuls les clients peuvent contacter des escorts",
+        "escortNotFound": "Escort non trouvé",
+        "conversationExists": "La conversation existe déjà",
+        "sendMessageError": "Erreur lors de l'envoi du message",
+        "loadError": "Erreur lors du chargement",
+        "markReadError": "Erreur lors du marquage comme lu"
+      },
+      "loading": {
+        "conversations": "Chargement des conversations...",
+        "messages": "Chargement des messages..."
+      }
+    }
+  },
+   "Auth": {
+    "SignIn": {
+      "title": "Bienvenue",
+      "subtitle": "Connectez-vous pour accéder à votre compte",
+      "form": {
+        "email": {
+          "label": "Adresse email",
+          "placeholder": "votre.email@exemple.com",
+          "errors": {
+            "required": "L'email est requis",
+            "invalid": "Veuillez entrer une adresse email valide"
+          }
+        },
+        "password": {
+          "label": "Mot de passe",
+          "placeholder": "Entrez votre mot de passe",
+          "errors": {
+            "required": "Le mot de passe est requis"
+          },
+          "show": "Afficher le mot de passe",
+          "hide": "Masquer le mot de passe"
+        },
+        "forgotPassword": "Mot de passe oublié ?",
+        "submit": {
+          "text": "Se connecter",
+          "loading": "Connexion en cours..."
+        }
+      },
+      "register": {
+        "noAccount": "Vous n'avez pas de compte ?",
+        "orRegisterAs": "Ou inscrivez-vous en tant que :",
+        "user": "Utilisateur",
+        "escort": "Escort"
+      },
+      "features": {
+        "title": "Fonctionnalités :",
+        "secureAuth": "Authentification sécurisée",
+        "personalizedDashboard": "Tableau de bord personnalisé",
+        "easyAccountManagement": "Gestion simplifiée du compte"
+      },
+      "messages": {
+        "success": "Connexion réussie ! Bienvenue !",
+        "error": "Échec de la connexion : {error}",
+        "genericError": "Une erreur est survenue lors de la connexion. Veuillez réessayer."
+      }
+    }
+  }
+}
