@@ -11,6 +11,7 @@ import { frenchCities, languages, categories, popularCities } from './constants'
 import { useRouter } from 'next/navigation';
 import { useScopedI18n } from '../../../locales/client';
 import { LocaleSelect } from '@/components/LocaleSelect';
+import AgeGate from '@/components/AgeGate';
 
 // Helper function to slugify city names
 const slugify = (text: string): string => {
@@ -200,8 +201,8 @@ export default function LadysOneHome() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
+      <AgeGate />
       <Header/>
-      
       {/* Hero Section */}
       <div className="relative bg-gradient-to-r from-pink-900/20 via-purple-900/20 to-blue-900/20 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
