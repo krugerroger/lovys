@@ -1512,4 +1512,73 @@ export default {
             date: "März 2026"
   }
     },
+    CityRankingPage: {
+    loadingCity: "Stadt wird geladen...",
+    header: {
+      title: "Ranking in {{city}}",
+      description: "Alle Anzeigen nach dem Positionierungsalgorithmus sortiert",
+      myAdsButton: "Meine Anzeigen",
+      newAdButton: "Neue Anzeige"
+    },
+    filters: {
+      searchPlaceholder: "Nach Anzeige suchen...",
+      sortBy: "Sortieren nach:",
+      sortOptions: {
+        position: "Position",
+        created_at: "Erstellungsdatum",
+        boost_time: "Letzter Boost"
+      },
+      cityInfo: "Stadt: {{city}}",
+      displayingAds: "Zeige {{count}} Anzeigen an",
+      refreshButton: "Aktualisieren"
+    },
+    algorithmLegend: {
+      title: "💡 Wie funktioniert das Ranking?",
+      boostedAds: "Geboostete Anzeigen kommen vor nicht-geboosteten",
+      recentBoost: "Aktueller Boost = bessere Position (nach Datum sortiert)",
+      noBoost: "Kein Boost = nach Erstellungsdatum sortiert (neueste zuerst)"
+    },
+    loadingRankings: "Ranking wird geladen...",
+    emptyState: {
+      title: "Keine Anzeigen gefunden",
+      description: "Es gibt noch keine Anzeigen in {{city}}.",
+      createFirstAdButton: "Erste Anzeige erstellen"
+    },
+    adCard: {
+      positionBadge: "#{{position}}/{{total}}",
+      boostedBadge: "GEBOOSTET",
+      userAdBadge: "Ihre Anzeige",
+      untitledAd: "Ohne Titel",
+      createdOn: "Erstellt am {{date}}",
+      boostedAgo: "Geboostet {{timeAgo}}",
+      viewDetails: "Details ansehen",
+      alreadyBoosted: "Bereits geboostet",
+      boostAd: "Diese Anzeige boosten",
+      editAd: "Bearbeiten",
+      noImageAlt: "Anzeige"
+    },
+    pagination: {
+      previous: "Zurück",
+      next: "Weiter"
+    },
+    algorithmDetails: {
+      title: "📊 Detaillierter Ranking-Algorithmus",
+      priority1: {
+        title: "Priorität 1: Geboostete Anzeigen",
+        description: "Anzeigen, die kürzlich geboostet wurden, werden zuerst angezeigt. Je neuer der Boost, desto höher ist die Anzeige im Ranking."
+      },
+      priority2: {
+        title: "Priorität 2: Erstellungsdatum",
+        description: "Bei nicht-geboosteten Anzeigen erfolgt die Sortierung nach Erstellungsdatum. Die neuesten Anzeigen erscheinen zuerst."
+      },
+      boostInfo: {
+        title: "Wie boosten Sie Ihre Anzeige?",
+        description: "Klicken Sie auf das Boost-Symbol, um Ihre Anzeige zu boosten. Der Boost dauert 24 Stunden und platziert Ihre Anzeige vorübergehend an der Spitze des Rankings."
+      }
+    },
+    loading: {
+      spinner: "Lädt",
+      refreshing: "Aktualisiert"
+    }
+    }
 } as const

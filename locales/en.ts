@@ -1512,4 +1512,73 @@ export default {
       date: "March, 2026"
     }
   },
+  CityRankingPage: {
+    loadingCity: "Loading city...",
+    header: {
+      title: "Ranking in {{city}}",
+      description: "All ads ranked according to the positioning algorithm",
+      myAdsButton: "My ads",
+      newAdButton: "New Ad"
+    },
+    filters: {
+      searchPlaceholder: "Search for an ad...",
+      sortBy: "Sort by:",
+      sortOptions: {
+        position: "Position",
+        created_at: "Creation date",
+        boost_time: "Last boost"
+      },
+      cityInfo: "City: {{city}}",
+      displayingAds: "Displaying {{count}} ads",
+      refreshButton: "Refresh"
+    },
+    algorithmLegend: {
+      title: "💡 How does the ranking work?",
+      boostedAds: "Boosted ads appear before non-boosted ones",
+      recentBoost: "Recent boost = better position (sorted by date)",
+      noBoost: "No boost = sorted by creation date (newest first)"
+    },
+    loadingRankings: "Loading rankings...",
+    emptyState: {
+      title: "No ads found",
+      description: "There are no ads in {{city}} yet.",
+      createFirstAdButton: "Create the first ad"
+    },
+    adCard: {
+      positionBadge: "#{{position}}/{{total}}",
+      boostedBadge: "BOOSTED",
+      userAdBadge: "Your ad",
+      untitledAd: "No title",
+      createdOn: "Created on {{date}}",
+      boostedAgo: "Boosted {{timeAgo}}",
+      viewDetails: "View details",
+      alreadyBoosted: "Already boosted",
+      boostAd: "Boost this ad",
+      editAd: "Edit",
+      noImageAlt: "Ad"
+    },
+    pagination: {
+      previous: "Previous",
+      next: "Next"
+    },
+    algorithmDetails: {
+      title: "📊 Detailed ranking algorithm",
+      priority1: {
+        title: "Priority 1: Boosted ads",
+        description: "Ads that have been recently boosted are displayed first. The more recent the boost, the higher the ad is in the ranking."
+      },
+      priority2: {
+        title: "Priority 2: Creation date",
+        description: "For non-boosted ads, ranking is done by creation date. The newest ads appear first."
+      },
+      boostInfo: {
+        title: "How to boost your ad?",
+        description: "Click on the boost icon to boost your ad. The boost lasts 24h and temporarily places your ad at the top of the ranking."
+      }
+    },
+    loading: {
+      spinner: "Loading",
+      refreshing: "Refreshing"
+    }
+  }
 } as const;

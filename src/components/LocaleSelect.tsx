@@ -61,7 +61,7 @@ export const LocaleSelect = ({
       {...props}
     >
       <SelectTrigger className={`w-[150px] gap-2 ${triggerClassName}`}>
-        {/* {currentLanguage && (
+        {currentLanguage && (
           <img
             src={currentLanguage.flag}
             alt={currentLanguage.label}
@@ -69,7 +69,7 @@ export const LocaleSelect = ({
             height={20}
             className="h-4 w-4"
           />
-        )} */}
+        )}
         <SelectValue placeholder="Select language" />
       </SelectTrigger>
       <SelectContent className={className}>

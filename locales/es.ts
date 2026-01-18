@@ -1525,4 +1525,73 @@ export default {
       date: "Marzo de 2026"
    }
   },
+  CityRankingPage: {
+    loadingCity: "Cargando ciudad...",
+    header: {
+      title: "Clasificación en {{city}}",
+      description: "Todos los anuncios clasificados según el algoritmo de posicionamiento",
+      myAdsButton: "Mis anuncios",
+      newAdButton: "Nuevo Anuncio"
+    },
+    filters: {
+      searchPlaceholder: "Buscar un anuncio...",
+      sortBy: "Ordenar por:",
+      sortOptions: {
+        position: "Posición",
+        created_at: "Fecha de creación",
+        boost_time: "Último boost"
+      },
+      cityInfo: "Ciudad: {{city}}",
+      displayingAds: "Mostrando {{count}} anuncios",
+      refreshButton: "Actualizar"
+    },
+    algorithmLegend: {
+      title: "💡 ¿Cómo funciona la clasificación?",
+      boostedAds: "Los anuncios boosteados aparecen antes que los no boosteados",
+      recentBoost: "Boost reciente = mejor posición (ordenado por fecha)",
+      noBoost: "Sin boost = ordenado por fecha de creación (reciente primero)"
+    },
+    loadingRankings: "Cargando clasificación...",
+    emptyState: {
+      title: "No se encontraron anuncios",
+      description: "Todavía no hay anuncios en {{city}}.",
+      createFirstAdButton: "Crear el primer anuncio"
+    },
+    adCard: {
+      positionBadge: "#{{position}}/{{total}}",
+      boostedBadge: "BOOSTEADA",
+      userAdBadge: "Tu anuncio",
+      untitledAd: "Sin título",
+      createdOn: "Creado el {{date}}",
+      boostedAgo: "Boosteada {{timeAgo}}",
+      viewDetails: "Ver detalles",
+      alreadyBoosted: "Ya boosteada",
+      boostAd: "Booster este anuncio",
+      editAd: "Editar",
+      noImageAlt: "Anuncio"
+    },
+    pagination: {
+      previous: "Anterior",
+      next: "Siguiente"
+    },
+    algorithmDetails: {
+      title: "📊 Algoritmo de clasificación detallado",
+      priority1: {
+        title: "Prioridad 1: Anuncios boosteados",
+        description: "Los anuncios que han sido boosteados recientemente se muestran primero. Cuanto más reciente sea el boost, más alto estará el anuncio en la clasificación."
+      },
+      priority2: {
+        title: "Prioridad 2: Fecha de creación",
+        description: "Para anuncios no boosteados, la clasificación se hace por fecha de creación. Los anuncios más recientes aparecen primero."
+      },
+      boostInfo: {
+        title: "¿Cómo booster tu anuncio?",
+        description: "Haz clic en el icono de boost para booster tu anuncio. El boost dura 24h y coloca temporalmente tu anuncio en la cima de la clasificación."
+      }
+    },
+    loading: {
+      spinner: "Cargando",
+      refreshing: "Actualizando"
+    }
+  }
 } as const
