@@ -1517,6 +1517,12 @@ export default {
       loading: "Cargando...",
       error: "Error",
       success: "Éxito"
-    }
+    },
+    PromoBanner: {
+      title: "OFERTA ESPECIAL LIMITADA",
+      message: "Anuncios y promociones GRATIS hasta el",
+      cta: "Aprovechar la oferta",
+      date: "Marzo de 2026"
+   }
   },
 } as const

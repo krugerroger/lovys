@@ -2,7 +2,7 @@
 
 import { Plus, Menu, X, Settings, CreditCard, MessageSquare, LogOut, Bell, Eye, MapPin } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useUser } from '@/app/[locale]/context/userContext';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -11,7 +11,7 @@ import { useScopedI18n } from '../../locales/client';
 import { LocaleSelect } from './LocaleSelect';
 
 export default function Sidebar({ children }: { children: React.ReactNode }) {
-  const { user, pendingAds, logout, getAdById } = useUser();
+  const { user, pendingAds, logout } = useUser();
   const router = useRouter();
   const t = useScopedI18n('Sidebar' as never) as (key: string, vars?: Record<string, any>) => string;
   
@@ -58,7 +58,6 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
       const city = ad.location?.city;
       if (!city) return;
 
-      // Normaliser la ville (enlever les caractères spéciaux, mettre en minuscule)
       const normalizedCity = String(city).toLowerCase().trim();
       
       if (!grouped[normalizedCity]) {
@@ -72,7 +71,6 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
     return grouped;
   }, [pendingAds]);
 
-  // Fonction pour formater le nom de la ville
   const formatCityName = (city: string): string => {
     if (!city) return t('ads.unknownCity');
     return city
@@ -81,21 +79,17 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
       .join(' ');
   };
 
-  // Fonction pour gérer le clic sur une ville
   const handleCityClick = (city: string) => {
-    // Si une seule annonce dans cette ville, rediriger vers cette annonce
     const cityData = groupedAdsByCity[city.toLowerCase()];
     if (cityData && cityData.ads.length === 1) {
       const ad = cityData.ads[0];
       router.push(`/manage/ads/${city}/${ad.pending_ad_id}`);
     } else {
-      // Sinon rediriger vers la liste des annonces de cette ville
       router.push(`/manage/ads/${city}`);
     }
     if (window.innerWidth < 1024) setIsSidebarOpen(false);
   };
 
-  // Fonction pour obtenir le slug de ville (URL-friendly)
   const getCitySlug = (city: string): string => {
     return city.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
   };
@@ -116,7 +110,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
           <Link href="/">
             <Image 
               loading="lazy" 
-              src="/images/lovira1.png" 
+              src="/lovira1.png" 
               alt={t('logoAlt')} 
               width={120} 
               height={60} 
@@ -190,7 +184,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                     </span>
                   </button>
                   
-                  {/* Liste des annonces dans cette ville (optionnel - peut être caché) */}
+                  {/* Liste des annonces dans cette ville */}
                   {data.ads.length > 1 && (
                     <div className="ml-4 pl-2 border-l border-pink-300/30 space-y-1">
                       {data.ads.slice(0, 3).map((ad) => (
@@ -311,6 +305,29 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
               ))}
             </div>
           </div>
+
+          {/* BANNER PROMOTIONNEL - AJOUTÉ ICI */}
+<div className="bg-gradient-to-r  border-t border-yellow-500/30">
+  <div className="px-4 lg:px-8 py-2">
+    <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center">
+      <div className="flex items-center gap-2">
+        <span className="text-lg">🎉</span>
+        <span className="font-bold text-gray-900 text-sm sm:text-base">
+          {t('PromoBanner.title')}
+        </span>
+        <span className="text-lg">🎉</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-gray-800 text-sm sm:text-base">
+          <span className="font-semibold">{t('PromoBanner.message')}</span>
+          {" "}
+          <span className="font-bold text-red-600">{t('PromoBanner.date')}</span>
+        </span>
+        <span className="hidden sm:inline text-lg">✨</span>
+      </div>
+    </div>
+  </div>
+</div>
         </div>
         
         {/* Page Content */}

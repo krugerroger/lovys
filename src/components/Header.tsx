@@ -23,7 +23,7 @@ export default function Header() {
           <div>
             <Image 
               loading="lazy" 
-              src="/images/lovira1.png" 
+              src="/lovira1.png" 
               alt={t('logoAlt')} 
               width={120} 
               height={60} 
@@ -112,16 +112,7 @@ export default function Header() {
         <div className="md:hidden bg-gray-800 border-b border-gray-700 px-4 py-3">
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between mb-2">
-              <button 
-                className="flex items-center gap-2 px-3 py-2 bg-gray-700 rounded hover:bg-gray-600 transition text-white w-full justify-center"
-              >
-                <img
-                  src="https://flagcdn.com/w20/us.png"
-                  alt={t('flags.us')}
-                  className="w-5 h-3"
-                />
-                <span>{t('buttons.changeLanguage')}</span>
-              </button>
+              <LocaleSelect />
             </div>
             
             <div className="grid grid-cols-2 gap-2">

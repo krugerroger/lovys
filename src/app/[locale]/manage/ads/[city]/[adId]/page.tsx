@@ -8,6 +8,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { PreviewAdData } from '@/types/adsForm'
 import { useScopedI18n } from '../../../../../../../locales/client'
+import Link from 'next/link'
 
 interface PositionInfo {
   position: number;
@@ -327,7 +328,7 @@ export default function ModelManagementPage() {
           <div className="flex items-center gap-3">
             {getRankIcon()}
             <div className="text-center">
-              <div className="text-3xl font-bold">#{position}</div>
+              <Link href="/manage/ads/ranking" className="text-3xl font-bold">#{position}</Link>
               <div className="text-sm opacity-90">{t('header.total')} {total}</div>
             </div>
           </div>

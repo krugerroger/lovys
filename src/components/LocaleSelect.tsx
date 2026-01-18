@@ -61,7 +61,7 @@ export const LocaleSelect = ({
       {...props}
     >
       <SelectTrigger className={`w-[150px] gap-2 ${triggerClassName}`}>
-        {currentLanguage && (
+        {/* {currentLanguage && (
           <img
             src={currentLanguage.flag}
             alt={currentLanguage.label}
@@ -69,20 +69,20 @@ export const LocaleSelect = ({
             height={20}
             className="h-4 w-4"
           />
-        )}
+        )} */}
         <SelectValue placeholder="Select language" />
       </SelectTrigger>
       <SelectContent className={className}>
         {languageOptions.map((language) => (
           <SelectItem key={language.value} value={language.value}>
             <div className="flex items-center gap-2">
-              <img
+              {/* <img
                 src={language.flag}
                 alt={language.label}
                 width={20}
                 height={20}
                 className="h-4 w-4"
-              />
+              /> */}
               <span>{language.label}</span>
             </div>
           </SelectItem>

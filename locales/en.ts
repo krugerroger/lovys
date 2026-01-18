@@ -1504,6 +1504,12 @@ export default {
       loading: "Loading...",
       error: "Error",
       success: "Success"
+    },
+    PromoBanner: {
+      title: "LIMITED TIME OFFER",
+      message: "FREE ads and boosts until",
+      cta: "Take advantage of the offer",
+      date: "March, 2026"
     }
   },
 } as const;

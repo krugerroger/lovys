@@ -1504,6 +1504,12 @@ export default {
         loading: "Lädt...",
         error: "Fehler",
         success: "Erfolg"
-        }
+        },
+        PromoBanner: {
+            title: "BESONDERES ANGEBOT BEGRENZT",
+            message: "Kostenlose Anzeigen und Boosts bis zum",
+            cta: "Angebot nutzen",
+            date: "März 2026"
+  }
     },
 } as const

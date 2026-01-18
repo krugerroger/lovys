@@ -1518,6 +1518,12 @@ export default {
       loading: "Chargement...",
       error: "Erreur",
       success: "Succès"
+    },
+    PromoBanner: {
+      title: "OFFRE SPÉCIALE LIMITÉE",
+      message: "Annonces et remontées GRATUITES jusqu'au",
+      cta: "Profiter de l'offre",
+      date: "Mars 2026"
     }
   },
 
