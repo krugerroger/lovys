@@ -22,7 +22,6 @@ export default function Header() {
           <div className="text-2xl sm:text-3xl"></div>
           <div>
             <Image 
-              loading="lazy" 
               src="/lovira1.png" 
               alt={t('logoAlt')} 
               width={120} 

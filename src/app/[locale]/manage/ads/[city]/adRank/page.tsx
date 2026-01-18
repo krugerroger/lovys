@@ -11,7 +11,6 @@ import {
   Clock,
   ArrowUp,
   Eye,
-  Filter,
   Search,
   ChevronUp,
   ChevronDown,
@@ -20,13 +19,17 @@ import {
   CheckCircle,
   Edit,
   Plus,
-  RefreshCw
+  RefreshCw,
+  Calendar,
+  Image as ImageIcon,
+  Heart
 } from 'lucide-react'
 import { useUser } from '@/app/[locale]/context/userContext'
 import { createClient } from '@/lib/supabase/client'
 import { PreviewAdData } from '@/types/adsForm'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
+import Image from 'next/image'
 
 interface RankedAd {
   ad: PreviewAdData;
@@ -34,11 +37,12 @@ interface RankedAd {
   total: number;
   isBoosted: boolean;
   lastBoosted?: string;
-  views?: number;
-  score: number;
+  boostTime?: number;
+  createdTime: number;
+  score?: number;
 }
 
-type SortField = 'position' | 'created_at' | 'boost_time' | 'views' | 'score'
+type SortField = 'position' | 'created_at' | 'boost_time'
 type SortDirection = 'asc' | 'desc'
 
 export default function CityRankingPage() {
@@ -101,14 +105,13 @@ export default function CityRankingPage() {
         .from('pending_ads')
         .select('*')
         .eq('status', 'approved')
-        .order('created_at', { ascending: false })
 
       if (error) {
         console.error('Supabase error:', error)
         throw error
       }
 
-      // Filtrer pour la ville spécifique
+      // Filtrer pour la ville spécifique (EXACTEMENT comme l'algorithme original)
       const filtered = (data || []).filter((ad: PreviewAdData) => {
         if (!ad || !ad.location?.city) return false
         
@@ -117,12 +120,16 @@ export default function CityRankingPage() {
         // Si c'est un tableau de villes
         if (Array.isArray(adCity)) {
           return adCity.some((c: string) => 
-            normalizeCityName(c) === normalizedCity
+            String(c).toLowerCase().includes(normalizedCity)
           )
         }
         
         // Si c'est une string unique
-        return normalizeCityName(adCity) === normalizedCity
+        if (typeof adCity === 'string') {
+          return adCity.toLowerCase().includes(normalizedCity)
+        }
+        
+        return false
       })
 
       console.log(`Annonces trouvées pour ${city}:`, filtered.length)
@@ -133,43 +140,36 @@ export default function CityRankingPage() {
     }
   }
 
-  // Calculer le score d'une annonce
-  const calculateAdScore = (ad: PreviewAdData): number => {
-    let score = 0
-    const normalizedCity = normalizeCityName(cityParam)
+  // LOGIQUE DE TRI EXACTEMENT COMME L'ALGORITHME ORIGINAL
+  const calculateSortedAds = (ads: PreviewAdData[]): PreviewAdData[] => {
+    if (ads.length === 0) return []
     
-    // Points pour le boost récent
-    const boostTime = ad.city_boosted_at?.[normalizedCity]
-    if (boostTime) {
-      const boostDate = new Date(boostTime)
-      const now = new Date()
-      const hoursSinceBoost = (now.getTime() - boostDate.getTime()) / (1000 * 60 * 60)
+    const normalizedCity = cityParam.toLowerCase()
+    
+    // Trier selon la logique simple EXACTEMENT comme dans l'algorithme original
+    return [...ads].sort((a, b) => {
+      const aBoostedAt = a.city_boosted_at?.[normalizedCity];
+      const bBoostedAt = b.city_boosted_at?.[normalizedCity];
       
-      if (hoursSinceBoost < 1) score += 100
-      else if (hoursSinceBoost < 24) score += 80
-      else if (hoursSinceBoost < 72) score += 50
-      else if (hoursSinceBoost < 168) score += 20
-    }
-    
-    // Points pour l'ancienneté (les plus récentes ont un avantage)
-    const createdDate = new Date(ad.created_at)
-    const now = new Date()
-    const daysSinceCreation = (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24)
-    
-    if (daysSinceCreation < 1) score += 50
-    else if (daysSinceCreation < 7) score += 30
-    else if (daysSinceCreation < 30) score += 15
-    
-    // Points bonus si l'annonce a une image
-    if (ad.images && ad.images.length > 0) score += 10
-    
-    // Points bonus si l'annonce a une description complète
-    if (ad.description && ad.description.length > 100) score += 5
-    
-    return Math.round(score)
+      // Cas 1: Les deux annonces sont boostées => trier par date de boost (la plus récente d'abord)
+      if (aBoostedAt && bBoostedAt) {
+        const aBoostTime = new Date(aBoostedAt).getTime();
+        const bBoostTime = new Date(bBoostedAt).getTime();
+        return bBoostTime - aBoostTime; // DESC: les plus récentes d'abord
+      }
+      
+      // Cas 2: Une seule est boostée => celle boostée passe avant
+      if (aBoostedAt && !bBoostedAt) return -1;
+      if (!aBoostedAt && bBoostedAt) return 1;
+      
+      // Cas 3: Aucune n'est boostée => trier par date de création (la plus récente d'abord)
+      const aCreatedTime = new Date(a.created_at).getTime();
+      const bCreatedTime = new Date(b.created_at).getTime();
+      return bCreatedTime - aCreatedTime; // DESC: les plus récentes d'abord
+    })
   }
 
-  // Calculer le classement pour la ville
+  // Calculer le classement pour la ville AVEC LA MÊME LOGIQUE
   const calculateRankings = async () => {
     if (!cityParam) return
     
@@ -191,42 +191,39 @@ export default function CityRankingPage() {
         return
       }
       
-      // Calculer le score pour chaque annonce
-      const adsWithScores = ads.map(ad => ({
-        ad,
-        score: calculateAdScore(ad)
-      }))
+      // Trier les annonces avec EXACTEMENT la même logique
+      const sortedAds = calculateSortedAds(ads)
+      const normalizedCity = normalizeCityName(cityParam)
       
-      // Trier par score (décroissant)
-      const sortedAds = [...adsWithScores].sort((a, b) => b.score - a.score)
-      
-      // Ajouter les positions et autres infos
+      // Préparer les données pour l'affichage
       const rankings: RankedAd[] = []
       let boostedCount = 0
       let userAdPosition = 0
       let userBoostCount = 0
-      const normalizedCity = normalizeCityName(cityParam)
       
-      sortedAds.forEach((item, index) => {
+      sortedAds.forEach((ad, index) => {
         const position = index + 1
-        const isBoosted = !!item.ad.city_boosted_at?.[normalizedCity]
+        const isBoosted = !!ad.city_boosted_at?.[normalizedCity]
+        const lastBoosted = ad.city_boosted_at?.[normalizedCity]
+        const boostTime = lastBoosted ? new Date(lastBoosted).getTime() : undefined
+        const createdTime = new Date(ad.created_at).getTime()
         
         if (isBoosted) boostedCount++
         
         // Vérifier si c'est une annonce de l'utilisateur connecté
-        if (user && item.ad.escort_id === user.user_id) {
+        if (user && ad.escort_id === user.user_id) {
           userAdPosition = position
           if (isBoosted) userBoostCount++
         }
         
         rankings.push({
-          ad: item.ad,
+          ad,
           position,
           total: sortedAds.length,
           isBoosted,
-          lastBoosted: item.ad.city_boosted_at?.[normalizedCity],
-          score: item.score,
-          views: Math.floor(Math.random() * 1000) + 100 // Données simulées
+          lastBoosted,
+          boostTime,
+          createdTime
         })
       })
       
@@ -266,7 +263,7 @@ export default function CityRankingPage() {
       )
     }
     
-    // Trier
+    // Trier selon les préférences de l'utilisateur
     result.sort((a, b) => {
       let aValue: any, bValue: any
       
@@ -276,20 +273,12 @@ export default function CityRankingPage() {
           bValue = b.position
           break
         case 'created_at':
-          aValue = new Date(a.ad.created_at).getTime()
-          bValue = new Date(b.ad.created_at).getTime()
+          aValue = a.createdTime
+          bValue = b.createdTime
           break
         case 'boost_time':
-          aValue = a.lastBoosted ? new Date(a.lastBoosted).getTime() : 0
-          bValue = b.lastBoosted ? new Date(b.lastBoosted).getTime() : 0
-          break
-        case 'views':
-          aValue = a.views || 0
-          bValue = b.views || 0
-          break
-        case 'score':
-          aValue = a.score
-          bValue = b.score
+          aValue = a.boostTime || 0
+          bValue = b.boostTime || 0
           break
         default:
           return 0
@@ -329,10 +318,25 @@ export default function CityRankingPage() {
       return date.toLocaleDateString('fr-FR', {
         day: '2-digit',
         month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+        year: 'numeric'
       })
+    } catch {
+      return 'Date invalide'
+    }
+  }
+
+  // Formater le temps écoulé (comme dans l'algorithme original)
+  const formatTimeAgo = (timestamp: string) => {
+    try {
+      const date = new Date(timestamp)
+      const now = new Date()
+      const diffMs = now.getTime() - date.getTime()
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+      
+      if (diffHours < 1) return 'À l\'instant'
+      if (diffHours === 1) return 'Il y a 1 heure'
+      if (diffHours < 24) return `Il y a ${diffHours}h`
+      return `Il y a ${Math.floor(diffHours / 24)}j`
     } catch {
       return 'Date invalide'
     }
@@ -358,6 +362,14 @@ export default function CityRankingPage() {
   // Vérifier si une annonce appartient à l'utilisateur connecté
   const isUserAd = (ad: PreviewAdData) => {
     return user && ad.escort_id === user.user_id
+  }
+
+  // Obtenir la première image de l'annonce
+  const getFirstImage = (ad: PreviewAdData) => {
+    if (ad.images && ad.images.length > 0 && ad.images[0]) {
+      return ad.images[0]
+    }
+    return null
   }
 
   // Rendu conditionnel pour le chargement initial
@@ -388,7 +400,7 @@ export default function CityRankingPage() {
                 </h1>
               </div>
               <p className="text-white/90 text-lg">
-                Toutes les annonces classées par performance dans cette ville
+                Toutes les annonces classées selon l'algorithme de positionnement
               </p>
             </div>
             <div className="flex items-center gap-4">
@@ -414,73 +426,6 @@ export default function CityRankingPage() {
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <BarChart className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{stats.totalAds}</div>
-                <div className="text-sm text-gray-500">Annonces totales</div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{stats.boostedAds}</div>
-                <div className="text-sm text-gray-500">Annonces boostées</div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <Trophy className="w-6 h-6 text-purple-600" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{stats.averagePosition}</div>
-                <div className="text-sm text-gray-500">Position moyenne</div>
-              </div>
-            </div>
-          </div>
-          
-          {user && stats.myPosition > 0 && (
-            <>
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-                    <Crown className="w-6 h-6 text-amber-600" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-gray-900">#{stats.myPosition}</div>
-                    <div className="text-sm text-gray-500">Votre position</div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center">
-                    <ArrowUp className="w-6 h-6 text-pink-600" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-gray-900">{stats.myTotalBoosts}</div>
-                    <div className="text-sm text-gray-500">Vos boosts</div>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
         {/* Filtres et recherche */}
         <div className="bg-white rounded-2xl p-6 mb-8 shadow-sm border border-gray-200">
           <div className="flex flex-col md:flex-row gap-4">
@@ -495,6 +440,28 @@ export default function CityRankingPage() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
+              </div>
+            </div>
+            
+            {/* Trier par */}
+            <div className="w-full md:w-64">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Trier par :</span>
+                <select
+                  value={sortField}
+                  onChange={(e) => setSortField(e.target.value as SortField)}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="position">Position</option>
+                  <option value="created_at">Date de création</option>
+                  <option value="boost_time">Dernier boost</option>
+                </select>
+                <button
+                  onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                  className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  {sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
               </div>
             </div>
             
@@ -522,261 +489,232 @@ export default function CityRankingPage() {
           </div>
         </div>
 
-        {/* Tableau des classements */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-          {/* En-têtes du tableau */}
-          <div className="grid grid-cols-12 gap-4 p-6 border-b border-gray-200 bg-gray-50">
-            <div className="col-span-1 font-medium text-gray-700 text-sm">
-              <button
-                onClick={() => handleSort('position')}
-                className="flex items-center gap-1 hover:text-blue-600"
-                disabled={filteredAds.length === 0}
-              >
-                Position
-                {sortField === 'position' && (
-                  sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                )}
-              </button>
+        {/* Légende de l'algorithme */}
+        <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
+          <h3 className="text-lg font-bold text-blue-900 mb-3">💡 Comment fonctionne le classement ?</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-blue-800">
+            <div className="flex items-start gap-2">
+              <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center mt-0.5">
+                <span className="text-blue-700 font-bold">1</span>
+              </div>
+              <span><strong>Annonces boostées</strong> passent avant les non-boostées</span>
             </div>
-            <div className="col-span-4 font-medium text-gray-700 text-sm">
-              Annonce
+            <div className="flex items-start gap-2">
+              <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center mt-0.5">
+                <span className="text-blue-700 font-bold">2</span>
+              </div>
+              <span><strong>Boost récent</strong> = meilleure position (tri par date)</span>
             </div>
-            <div className="col-span-2 font-medium text-gray-700 text-sm">
-              <button
-                onClick={() => handleSort('score')}
-                className="flex items-center gap-1 hover:text-blue-600"
-                disabled={filteredAds.length === 0}
-              >
-                Score
-                {sortField === 'score' && (
-                  sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                )}
-              </button>
-            </div>
-            <div className="col-span-2 font-medium text-gray-700 text-sm">
-              <button
-                onClick={() => handleSort('boost_time')}
-                className="flex items-center gap-1 hover:text-blue-600"
-                disabled={filteredAds.length === 0}
-              >
-                Dernier boost
-                {sortField === 'boost_time' && (
-                  sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                )}
-              </button>
-            </div>
-            <div className="col-span-3 font-medium text-gray-700 text-sm text-right">
-              Actions
+            <div className="flex items-start gap-2">
+              <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center mt-0.5">
+                <span className="text-blue-700 font-bold">3</span>
+              </div>
+              <span><strong>Sans boost</strong> = tri par date de création (récent d'abord)</span>
             </div>
           </div>
+        </div>
 
-          {/* Contenu du tableau */}
-          {loading ? (
-            <div className="p-12 text-center">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-              <p className="text-gray-600">Chargement du classement...</p>
-            </div>
-          ) : filteredAds.length === 0 ? (
-            <div className="p-12 text-center">
-              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune annonce trouvée</h3>
-              <p className="text-gray-600 mb-6">
-                {cityName ? 
-                  `Il n'y a pas encore d'annonces dans ${cityName}.` 
-                  : 'Ville non spécifiée.'}
-              </p>
-              {cityParam && (
-                <Link
-                  href={`/manage/ads/form?city=${cityParam}`}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:opacity-90 transition"
-                >
-                  <Plus className="w-5 h-5" />
-                  Créer la première annonce
-                </Link>
-              )}
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-200">
-              {filteredAds.map((rankedAd) => (
+        {/* Annonces en format miniature */}
+        {loading ? (
+          <div className="p-12 text-center bg-white rounded-2xl shadow-sm border border-gray-200">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+            <p className="text-gray-600">Chargement du classement...</p>
+          </div>
+        ) : filteredAds.length === 0 ? (
+          <div className="p-12 text-center bg-white rounded-2xl shadow-sm border border-gray-200">
+            <AlertCircle className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune annonce trouvée</h3>
+            <p className="text-gray-600 mb-6">
+              {cityName ? 
+                `Il n'y a pas encore d'annonces dans ${cityName}.` 
+                : 'Ville non spécifiée.'}
+            </p>
+            {cityParam && (
+              <Link
+                href={`/manage/ads/form?city=${cityParam}`}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:opacity-90 transition"
+              >
+                <Plus className="w-5 h-5" />
+                Créer la première annonce
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredAds.map((rankedAd) => {
+              const image = getFirstImage(rankedAd.ad)
+              const isUser = isUserAd(rankedAd.ad)
+              
+              return (
                 <div 
                   key={`${rankedAd.ad.pending_ad_id}`}
-                  className={`grid grid-cols-12 gap-4 p-6 transition-colors ${
-                    isUserAd(rankedAd.ad) 
-                      ? 'bg-blue-50 hover:bg-blue-100' 
-                      : 'hover:bg-gray-50'
-                  }`}
+                  className={`bg-white rounded-xl shadow-sm border transition-all duration-300 hover:shadow-md ${
+                    isUser ? 'border-blue-300 ring-1 ring-blue-100' : 'border-gray-200'
+                  } ${selectedAd === rankedAd.ad.pending_ad_id ? 'ring-2 ring-blue-300' : ''}`}
                   onMouseEnter={() => setSelectedAd(rankedAd.ad.pending_ad_id)}
                   onMouseLeave={() => setSelectedAd(null)}
                 >
-                  {/* Position */}
-                  <div className="col-span-1 flex items-center">
-                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${getPositionColor(rankedAd.position)}`}>
-                      {getPositionIcon(rankedAd.position)}
-                      <span className="font-bold">#{rankedAd.position}</span>
-                    </div>
-                  </div>
-                  
-                  {/* Annonce */}
-                  <div className="col-span-4">
-                    <div className="flex items-start gap-3">
-                      {isUserAd(rankedAd.ad) && (
-                        <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                          Votre annonce
-                        </span>
+                  {/* En-tête avec position et badge boost */}
+                  <div className="p-4 border-b border-gray-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${getPositionColor(rankedAd.position)}`}>
+                        {getPositionIcon(rankedAd.position)}
+                        <span className="font-bold text-sm">#{rankedAd.position}</span>
+                        <span className="text-xs text-gray-500">/ {rankedAd.total}</span>
+                      </div>
+                      
+                      {rankedAd.isBoosted && (
+                        <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-medium rounded-full">
+                          <TrendingUp className="w-3 h-3" />
+                          <span>BOOSTÉE</span>
+                        </div>
                       )}
-                      <div>
-                        <div className="font-medium text-gray-900 mb-1">
-                          {rankedAd.ad.title || 'Sans titre'}
-                        </div>
-                        <div className="text-sm text-gray-500 flex items-center gap-2">
-                          <Clock className="w-3 h-3" />
-                          {formatDate(rankedAd.ad.created_at)}
-                          {rankedAd.views && (
-                            <>
-                              <span className="mx-1">•</span>
-                              <span>{rankedAd.views} vues</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
                     </div>
-                  </div>
-                  
-                  {/* Score */}
-                  <div className="col-span-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-gradient-to-r from-green-500 to-emerald-600 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${Math.min(100, (rankedAd.score / 150) * 100)}%` }}
-                        />
+                    
+                    {isUser && (
+                      <div className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full mb-2">
+                        Votre annonce
                       </div>
-                      <span className="font-medium text-gray-900 min-w-[40px]">{rankedAd.score}</span>
-                    </div>
-                  </div>
-                  
-                  {/* Dernier boost */}
-                  <div className="col-span-2">
-                    {rankedAd.lastBoosted ? (
-                      <div className="flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4 text-green-600" />
-                        <div>
-                          <div className="font-medium text-green-700">Boostée</div>
-                          <div className="text-sm text-gray-500">{formatDate(rankedAd.lastBoosted)}</div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-gray-400">Non boostée</div>
                     )}
+                    
+                    <h3 className="font-medium text-gray-900 truncate">
+                      {rankedAd.ad.title || 'Sans titre'}
+                    </h3>
+                  </div>
+                  
+                  {/* Image miniature */}
+                  <div className="p-4">
+                    <div className="relative aspect-square rounded-lg overflow-hidden bg-gray-100 mb-3">
+                      {image ? (
+                        <Image
+                          src={image}
+                          alt={rankedAd.ad.title || 'Annonce'}
+                          fill
+                          className="object-cover hover:scale-105 transition-transform duration-300"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <ImageIcon className="w-12 h-12 text-gray-400" />
+                        </div>
+                      )}
+                      
+                      {/* Badge favoris simulé */}
+                      <div className="absolute top-2 right-2">
+                        <button className="p-1.5 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition">
+                          <Heart className="w-4 h-4 text-gray-600" />
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {/* Infos rapides */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Calendar className="w-4 h-4" />
+                        <span>Créée le {formatDate(rankedAd.ad.created_at)}</span>
+                      </div>
+                      
+                      {rankedAd.lastBoosted && (
+                        <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded-lg">
+                          <TrendingUp className="w-4 h-4" />
+                          <span>Boostée {formatTimeAgo(rankedAd.lastBoosted)}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   
                   {/* Actions */}
-                  <div className="col-span-3 flex items-center justify-end gap-2">
-                    <Link
-                      href={`/manage/ads/${cityParam}/${rankedAd.ad.pending_ad_id}`}
-                      className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                      title="Voir les détails"
-                    >
-                      <Eye className="w-5 h-5" />
-                    </Link>
-                    
-                    {rankedAd.isBoosted ? (
-                      <div className="p-2 text-amber-600 bg-amber-50 rounded-lg" title="Déjà boostée">
-                        <CheckCircle className="w-5 h-5" />
-                      </div>
-                    ) : (
+                  <div className="p-4 border-t border-gray-100">
+                    <div className="flex items-center gap-2">
                       <Link
                         href={`/manage/ads/${cityParam}/${rankedAd.ad.pending_ad_id}`}
-                        className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition"
-                        title="Booster cette annonce"
+                        className="flex-1 py-2.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-sm font-medium text-center transition flex items-center justify-center gap-1.5"
                       >
-                        <ArrowUp className="w-5 h-5" />
+                        <Eye className="w-4 h-4" />
+                        Voir détails
                       </Link>
-                    )}
-                    
-                    {isUserAd(rankedAd.ad) && (
-                      <Link
-                        href={`/manage/ads/${cityParam}/${rankedAd.ad.pending_ad_id}/update`}
-                        className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition"
-                        title="Modifier"
-                      >
-                        <Edit className="w-5 h-5" />
-                      </Link>
-                    )}
+                      
+                      {rankedAd.isBoosted ? (
+                        <div className="p-2.5 text-amber-600 bg-amber-50 rounded-lg" title="Déjà boostée">
+                          <CheckCircle className="w-4 h-4" />
+                        </div>
+                      ) : (
+                        <Link
+                          href={`/manage/ads/${cityParam}/${rankedAd.ad.pending_ad_id}`}
+                          className="p-2.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition"
+                          title="Booster cette annonce"
+                        >
+                          <ArrowUp className="w-4 h-4" />
+                        </Link>
+                      )}
+                      
+                      {isUser && (
+                        <Link
+                          href={`/manage/ads/${cityParam}/${rankedAd.ad.pending_ad_id}/update`}
+                          className="p-2.5 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition"
+                          title="Modifier"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              )
+            })}
+          </div>
+        )}
 
-        {/* Légende */}
-        <div className="mt-8 bg-white rounded-xl p-6 border border-gray-200">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">Comment fonctionne le classement ?</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="font-medium text-gray-900 mb-3">Système de score</h4>
-              <ul className="space-y-2 text-gray-600">
-                <li className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span><strong>Boost récent</strong> : Jusqu'à 100 points</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span><strong>Annonce récente</strong> : Jusqu'à 50 points</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                  <span><strong>Avec photos</strong> : +10 points</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
-                  <span><strong>Description complète</strong> : +5 points</span>
-                </li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-medium text-gray-900 mb-3">Positionnement</h4>
-              <ul className="space-y-2 text-gray-600">
-                <li className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center justify-center">
-                    <Crown className="w-4 h-4 text-yellow-600" />
-                  </div>
-                  <span><strong>1ère place</strong> : Meilleure visibilité</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center">
-                    <Trophy className="w-4 h-4 text-gray-600" />
-                  </div>
-                  <span><strong>Top 3</strong> : Très bonne position</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center">
-                    <Star className="w-4 h-4 text-blue-600" />
-                  </div>
-                  <span><strong>Top 10</strong> : Bonne visibilité</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-green-50 border border-green-200 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="w-4 h-4 text-green-600" />
-                  </div>
-                  <span><strong>Boostée</strong> : Priorité temporaire</span>
-                </li>
-              </ul>
+        {/* Pagination simplifiée */}
+        {filteredAds.length > 0 && (
+          <div className="mt-8 flex items-center justify-center">
+            <div className="flex gap-2">
+              <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm">
+                Précédent
+              </button>
+              <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:opacity-90 text-sm">
+                1
+              </button>
+              <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
+                2
+              </button>
+              <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
+                3
+              </button>
+              <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
+                Suivant
+              </button>
             </div>
           </div>
+        )}
+
+        {/* Explication détaillée de l'algorithme */}
+        <div className="mt-8 bg-white rounded-xl p-6 border border-gray-200">
+          <h3 className="text-lg font-bold text-gray-800 mb-4">📊 Algorithme de classement détaillé</h3>
           
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="flex items-start gap-3">
-              <ArrowUp className="w-5 h-5 text-blue-600 mt-0.5" />
-              <div>
-                <h4 className="font-medium text-blue-900 mb-1">Comment améliorer votre position ?</h4>
-                <p className="text-blue-800 text-sm">
-                  Utilisez le système de boost pour remonter temporairement en tête du classement.
-                  Les annonces boostées récemment sont prioritaires dans l'algorithme de classement.
-                </p>
-              </div>
+          <div className="space-y-4">
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h4 className="font-medium text-blue-900 mb-2">Priorité 1 : Annonces boostées</h4>
+              <p className="text-blue-800 text-sm">
+                Les annonces qui ont été boostées récemment sont affichées en premier. 
+                Plus le boost est récent, plus l'annonce est haute dans le classement.
+              </p>
+            </div>
+            
+            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+              <h4 className="font-medium text-green-900 mb-2">Priorité 2 : Date de création</h4>
+              <p className="text-green-800 text-sm">
+                Pour les annonces non boostées, le classement se fait par date de création. 
+                Les annonces les plus récentes apparaissent en premier.
+              </p>
+            </div>
+            
+            <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+              <h4 className="font-medium text-amber-900 mb-2">Comment booster votre annonce ?</h4>
+              <p className="text-amber-800 text-sm">
+                Cliquez sur l'icône <ArrowUp className="w-4 h-4 inline" /> pour booster votre annonce. 
+                Le boost dure 24h et place temporairement votre annonce en tête du classement.
+              </p>
             </div>
           </div>
         </div>

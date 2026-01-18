@@ -108,8 +108,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
         {/* Header */}
         <div className="p-4 text-xl font-semibold border-b border-pink-400 flex items-center justify-between">
           <Link href="/">
-            <Image 
-              loading="lazy" 
+            <Image
               src="/lovira1.png" 
               alt={t('logoAlt')} 
               width={120} 

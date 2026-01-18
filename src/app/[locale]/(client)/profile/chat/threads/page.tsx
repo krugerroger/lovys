@@ -21,7 +21,6 @@ import { fr } from 'date-fns/locale';
 import { useUser } from '@/app/[locale]/context/userContext';
 import { createClient } from '@/lib/supabase/client';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
 import { Conversation, Message } from '@/types/profile';
 import { useI18n, useScopedI18n } from '../../../../../../../locales/client';
 

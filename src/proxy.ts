@@ -302,6 +302,12 @@ function redirectAuthenticatedUser(request: NextRequest, userType: string, local
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|robots.txt|public).*)',
+    /*
+     Exclut :
+     - api
+     - _next (image, static, etc.)
+     - fichiers publics (png, jpg, svg, ico, etc.)
+    */
+    '/((?!api|_next|favicon.ico|robots.txt|.*\\.(?:png|jpg|jpeg|svg|webp|ico)).*)',
   ],
 }

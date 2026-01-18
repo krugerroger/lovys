@@ -325,13 +325,13 @@ export default function ModelManagementPage() {
     return (
       <div className="flex items-center gap-4">
         <div className={`bg-gradient-to-br ${getRankColor()} text-white p-4 rounded-2xl shadow-lg`}>
-          <div className="flex items-center gap-3">
+          <Link href={`/manage/ads/${city}/adRank`} className="flex items-center gap-3">
             {getRankIcon()}
             <div className="text-center">
-              <Link href="/manage/ads/ranking" className="text-3xl font-bold">#{position}</Link>
+              <div className="text-3xl font-bold">#{position}</div>
               <div className="text-sm opacity-90">{t('header.total')} {total}</div>
             </div>
-          </div>
+          </Link>
         </div>
         
         <div className="flex-1">
