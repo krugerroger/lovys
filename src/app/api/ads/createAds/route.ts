@@ -227,7 +227,7 @@ export async function POST(request: NextRequest) {
       description: form.get("description") as string || "",
       currency: form.get("currency") as string || "USD",
       
-      status: "pending",
+      status: "approved", // Par défaut à "approved" pour publication immédiate
     };
 
     // 8. Validation des champs obligatoires

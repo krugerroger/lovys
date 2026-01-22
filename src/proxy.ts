@@ -6,7 +6,7 @@ import { createServerClient } from '@supabase/ssr'
 const I18nMiddleware = createI18nMiddleware({
   locales: ['en', 'fr', 'de', 'es', 'pt'],
   defaultLocale: 'fr',
-  urlMappingStrategy: 'rewriteDefault',
+  urlMappingStrategy: 'redirect',
 })
 
 const PUBLIC_ROUTES = [

@@ -261,3 +261,15 @@ export type ServiceKey =
   | 'eroticMassage'
   | 'striptease'
   | 'goldenShower';
+
+  export interface Ad {
+    pending_ad_id: string
+    escort_id: string
+    title: string
+    country: string
+    city: string
+    images: string[]
+    created_at: string
+    email: string
+    username?: string
+  }

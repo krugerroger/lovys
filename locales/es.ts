@@ -1528,7 +1528,7 @@ export default {
   CityRankingPage: {
     loadingCity: "Cargando ciudad...",
     header: {
-      title: "Clasificación en {{city}}",
+      title: "Clasificación en ",
       description: "Todos los anuncios clasificados según el algoritmo de posicionamiento",
       myAdsButton: "Mis anuncios",
       newAdButton: "Nuevo Anuncio"
@@ -1541,8 +1541,8 @@ export default {
         created_at: "Fecha de creación",
         boost_time: "Último boost"
       },
-      cityInfo: "Ciudad: {{city}}",
-      displayingAds: "Mostrando {{count}} anuncios",
+      cityInfo: "Ciudad: ",
+      displayingAds: "Anuncios ",
       refreshButton: "Actualizar"
     },
     algorithmLegend: {
@@ -1554,16 +1554,16 @@ export default {
     loadingRankings: "Cargando clasificación...",
     emptyState: {
       title: "No se encontraron anuncios",
-      description: "Todavía no hay anuncios en {{city}}.",
+      description: "Todavía no hay anuncios en .",
       createFirstAdButton: "Crear el primer anuncio"
     },
     adCard: {
-      positionBadge: "#{{position}}/{{total}}",
+      // positionBadge: "#{{position}}/{{total}}",
       boostedBadge: "BOOSTEADA",
       userAdBadge: "Tu anuncio",
       untitledAd: "Sin título",
-      createdOn: "Creado el {{date}}",
-      boostedAgo: "Boosteada {{timeAgo}}",
+      createdOn: "Creado el ",
+      boostedAgo: "Boosteada ",
       viewDetails: "Ver detalles",
       alreadyBoosted: "Ya boosteada",
       boostAd: "Booster este anuncio",

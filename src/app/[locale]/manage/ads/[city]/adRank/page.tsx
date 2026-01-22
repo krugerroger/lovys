@@ -359,7 +359,7 @@ export default function CityRankingPage() {
               <div className="flex items-center gap-3 mb-2">
                 <MapPin className="w-8 h-8 text-white" />
                 <h1 className="text-3xl md:text-4xl font-bold text-white">
-                  {cityName ? t('header.title', { city: cityName }) : t('loadingCity')}
+                  {cityName ? <>{t('header.title')} {cityName}</> : t('loadingCity')}
                 </h1>
               </div>
               <p className="text-white/90 text-lg">
@@ -446,9 +446,9 @@ export default function CityRankingPage() {
           {/* Info ville */}
           <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
             <MapPin className="w-4 h-4" />
-            <span>{t('filters.cityInfo', { city: cityName || t('loadingCity') })}</span>
+            <span>{t('filters.cityInfo')} {cityName || t('loadingCity')}</span>
             <span className="mx-2">•</span>
-            <span>{t('filters.displayingAds', { count: filteredAds.length })}</span>
+            <span>{t('filters.displayingAds')} {filteredAds.length }</span>
           </div>
         </div>
 
@@ -489,7 +489,7 @@ export default function CityRankingPage() {
             <h3 className="text-lg font-medium text-gray-900 mb-2">{t('emptyState.title')}</h3>
             <p className="text-gray-600 mb-6">
               {cityName ? 
-                t('emptyState.description', { city: cityName }) 
+                <>{t('emptyState.description')} {cityName}</>
                 : t('loadingCity')}
             </p>
             {cityParam && (
@@ -575,13 +575,13 @@ export default function CityRankingPage() {
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Calendar className="w-4 h-4" />
-                        <span>{t('adCard.createdOn', { date: formatDate(rankedAd.ad.created_at) })}</span>
+                        <span>{t('adCard.createdOn')} {formatDate(rankedAd.ad.created_at)}</span>
                       </div>
                       
                       {rankedAd.lastBoosted && (
                         <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded-lg">
                           <TrendingUp className="w-4 h-4" />
-                          <span>{t('adCard.boostedAgo', { timeAgo: formatTimeAgo(rankedAd.lastBoosted) })}</span>
+                          <span>{t('adCard.boostedAgo')} {formatTimeAgo(rankedAd.lastBoosted) }</span>
                         </div>
                       )}
                     </div>
@@ -591,7 +591,7 @@ export default function CityRankingPage() {
                   <div className="p-4 border-t border-gray-100">
                     <div className="flex items-center gap-2">
                       <Link
-                        href={`/manage/ads/${cityParam}/${rankedAd.ad.pending_ad_id}`}
+                        href={`/escorts/${cityParam}/${rankedAd.ad.pending_ad_id}`}
                         className="flex-1 py-2.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-sm font-medium text-center transition flex items-center justify-center gap-1.5"
                       >
                         <Eye className="w-4 h-4" />

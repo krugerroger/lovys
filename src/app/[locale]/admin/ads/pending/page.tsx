@@ -3,95 +3,140 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { 
-  Search, 
-  CheckCircle, 
-  XCircle, 
-  Eye, 
-  Calendar,
-  MapPin,
-  User,
-  Mail,
-  AlertTriangle,
-  ChevronLeft,
-  RefreshCw,
-  Download,
-  Image as ImageIcon,
-  ExternalLink,
-} from 'lucide-react'
+import { RefreshCw, Search } from 'lucide-react'
+import { Eye } from 'lucide-react'
+import { Calendar } from 'lucide-react'
+import { MapPin } from 'lucide-react'
+import { User } from 'lucide-react'
+import { Mail } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
+
+import { Download } from 'lucide-react'
+import { Image as ImageIcon } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
+import { Trash2 } from 'lucide-react'
+import { XCircle } from 'lucide-react'
+import { CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
-
-interface PendingAd {
-  id: string
-  user_id: string
-  title: string
-  country: string
-  city: string[]
-  images: string[]
-  status: string
-  created_at: string
-  email: string
-  username: string
-}
+import { Ad } from '@/types/adsForm'
+import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
 
 export default function ManagePendingAdsPage() {
   const router = useRouter()
-  const [ads, setAds] = useState<PendingAd[]>([])
-  const [loading, setLoading] = useState(true)
-  const [selectedAd, setSelectedAd] = useState<PendingAd | null>(null)
+  const [ads, setAds] = useState<Ad[]>([])
+  const [totalAds, setTotalAds] = useState(0)
+  const [loading, setLoading] = useState(false)
+  const [selectedAd, setSelectedAd] = useState<Ad | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [filter, setFilter] = useState('all') // all, today, week, month
+  const [searchId, setSearchId] = useState('')
+  const [filter, setFilter] = useState('all')
   const [processingId, setProcessingId] = useState<string | null>(null)
-  const [showRejectModal, setShowRejectModal] = useState(false)
-  const [rejectReason, setRejectReason] = useState('')
-  const [adToReject, setAdToReject] = useState<string | null>(null)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [isSearchingById, setIsSearchingById] = useState(false)
+  const [foundAd, setFoundAd] = useState<Ad | null>(null)
 
-  useEffect(() => {
-    fetchPendingAds()
-  }, [])
-
-  const fetchPendingAds = async () => {
-    setLoading(true)
+  const fetchAllAds = async () => {
     try {
-      const response = await fetch('/api/admin/ads/pending')
-      const data = await response.json()
+      const supabase = createClient()
+      const { data: ads, error } = await supabase
+        .from('pending_ads')
+        .select('pending_ad_id')
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch ads')
+      if (error) {
+        throw new Error(error.message)
       }
-      console.log('Fetched pending ads:', data.ads)
-      setAds(data.ads || [])
+      const totalAdsFound = ads.length
+      console.log(`Fetched ${totalAdsFound} pending ads`)
+      setTotalAds(totalAdsFound)
     } catch (error: any) {
-      toast.error(error.message || 'Failed to load ads')
-      console.error('Error:', error)
-    } finally {
-      setLoading(false)
+      toast.error(error.message)
     }
   }
 
-  const handleApprove = async (adId: string) => {
-    setProcessingId(adId)
+const searchAdById = async () => {
+  if (!searchId.trim()) {
+    toast.error('Please enter an Ad ID')
+    return
+  }
+  console.log('Searching for Ad ID:', searchId)
+  setIsSearchingById(true)
+  try {
+ const supabase = createClient()
+ 
+     const { data : ad, error } = await supabase
+       .from('pending_ads')
+       .select('pending_ad_id, title, location, escort_id, email, created_at, images')
+       .eq('pending_ad_id', searchId.trim())
+       .single()
+ 
+     if (error) {
+       console.error('Error fetching ad:', error)
+        throw new Error(error.message)
+     }
+
+     if (ad) {
+      const formattedAd = {
+        pending_ad_id: ad.pending_ad_id,
+        title: ad.title,
+        city: ad.location.city,
+        country: ad.location.country,
+        escort_id: ad.escort_id,
+        email: ad.email,
+        created_at: ad.created_at,
+        images: ad.images || []
+      } as Ad
+      setFoundAd(formattedAd)
+      toast.success('Ad found successfully!')
+    } else {
+      setFoundAd(null)
+      toast.info('No ad found with this ID')
+    }
+  } catch (error: any) {
+    toast.error(error.message)
+    setFoundAd(null)
+  } finally {
+    setIsSearchingById(false)
+  }
+}
+
+
+  const clearIdSearch = () => {
+    setSearchId('')
+    setFoundAd(null)
+  }
+
+
+  const deleteFoundAd = async () => {
+    if (!foundAd) return
+    
+    if (!confirm(`Are you sure you want to delete ad "${foundAd.title}"? This action cannot be undone.`)) {
+      return
+    }
+
+    setProcessingId(foundAd.pending_ad_id)
     try {
-      const response = await fetch('/api/admin/ads/pending', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'approve', adId })
-      })
+      const supabase = createClient()
+      const { error: deleteError } = await supabase
+      .from('pending_ads')
+      .delete()
+      .eq('pending_ad_id', foundAd.pending_ad_id)
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to approve ad')
+      if (deleteError) {
+        throw new Error(deleteError.message || 'Failed to delete ad')
+        toast.error('Failed to delete ad')
       }
-
-      toast.success('Ad approved successfully!')
-      // Supprimer de la liste
-      setAds(prev => prev.filter(ad => ad.id !== adId))
-      if (selectedAd?.id === adId) {
+      toast.success('Ad deleted successfully!')
+      // Remove from main list
+      setAds(prev => prev.filter(ad => ad.pending_ad_id !== foundAd.pending_ad_id))
+      if (selectedAd?.pending_ad_id === foundAd.pending_ad_id) {
         setSelectedAd(null)
       }
+      // Clear search
+      setFoundAd(null)
+      setSearchId('')
     } catch (error: any) {
       toast.error(error.message)
     } finally {
@@ -99,55 +144,20 @@ export default function ManagePendingAdsPage() {
     }
   }
 
-  const handleReject = async () => {
-    if (!adToReject) return
-
-    setProcessingId(adToReject)
-    try {
-      const response = await fetch('/api/admin/ads/pending', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          action: 'reject', 
-          adId: adToReject,
-          reason: rejectReason 
-        })
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to reject ad')
-      }
-
-      toast.success('Ad rejected successfully!')
-      // Supprimer de la liste
-      setAds(prev => prev.filter(ad => ad.id !== adToReject))
-      if (selectedAd?.id === adToReject) {
-        setSelectedAd(null)
-      }
-    } catch (error: any) {
-      toast.error(error.message)
-    } finally {
-      setProcessingId(null)
-      setShowRejectModal(false)
-      setRejectReason('')
-      setAdToReject(null)
-    }
+  const getAdUrl = (ad: Ad) => {
+    const city = ad.city
+    const adId = ad.pending_ad_id || ad.pending_ad_id
+    return `/escorts/${city}/${adId}`
   }
 
-  const openRejectModal = (adId: string) => {
-    setAdToReject(adId)
-    setShowRejectModal(true)
-  }
-
-  const filteredAds = ads.filter(ad => {
+  const filteredAds = foundAd ? [foundAd] : ads.filter(ad => {
     const matchesSearch = 
       ad.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ad.city.some(c => c.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      ad.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
       ad.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ad.username.toLowerCase().includes(searchTerm.toLowerCase())
-
+      ad.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ad.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ad.pending_ad_id.toLowerCase().includes(searchTerm.toLowerCase())
     if (filter === 'today') {
       const today = new Date().toDateString()
       const adDate = new Date(ad.created_at).toDateString()
@@ -180,16 +190,17 @@ export default function ManagePendingAdsPage() {
   }
 
   const exportToCSV = () => {
+    const adsToExport = foundAd ? [foundAd] : ads
     const csvContent = [
-      ['ID', 'Title', 'Escort', 'Location', 'Images', 'Created At', 'Status'],
-      ...ads.map(ad => [
-        ad.id,
+      ['ID', 'Title', 'Username', 'Email', 'Location', 'Images', 'Created At', 'Status'],
+      ...adsToExport.map(ad => [
+        ad.pending_ad_id,
         ad.title,
-        ad?.username,
+        ad.username,
+        ad.email,
         `${ad.city}, ${ad.country}`,
         ad.images?.length || 0,
         formatDate(ad.created_at),
-        ad.status
       ])
     ].map(row => row.join(',')).join('\n')
 
@@ -197,7 +208,7 @@ export default function ManagePendingAdsPage() {
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `pending_ads_${new Date().toISOString().split('T')[0]}.csv`
+    a.download = `ads_${foundAd ? 'single' : 'all'}_${new Date().toISOString().split('T')[0]}.csv`
     a.click()
   }
 
@@ -206,7 +217,7 @@ export default function ManagePendingAdsPage() {
       <div className="min-h-screen bg-linear-to-br from-gray-900 to-black flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading pending ads...</p>
+          <p className="text-gray-400">Loading ads...</p>
         </div>
       </div>
     )
@@ -226,15 +237,18 @@ export default function ManagePendingAdsPage() {
                 <ChevronLeft className="w-5 h-5 text-gray-400" />
               </button>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-linear-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-linear-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
                   <AlertTriangle className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-white">Pending Ads</h1>
+                  <h1 className="text-xl font-bold text-white">Manage Ads</h1>
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+                    <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
                     <p className="text-sm text-gray-400">
-                      {ads.length} ads waiting for review
+                      {foundAd 
+                        ? `Viewing specific ad: ${foundAd.title}`
+                        : `${ads.length} total ads`
+                      }
                     </p>
                   </div>
                 </div>
@@ -242,13 +256,6 @@ export default function ManagePendingAdsPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <button
-                onClick={fetchPendingAds}
-                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg flex items-center gap-2 transition"
-              >
-                <RefreshCw className="w-4 h-4" />
-                <span className="hidden sm:inline">Refresh</span>
-              </button>
               <button
                 onClick={exportToCSV}
                 className="px-4 py-2 bg-green-600/20 hover:bg-green-600/30 text-green-400 rounded-lg flex items-center gap-2 transition"
@@ -263,73 +270,113 @@ export default function ManagePendingAdsPage() {
 
       {/* Main Content */}
       <div className="p-6">
-        {/* Stats & Filters */}
+        {/* ID Search & Filters */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Stats */}
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 lg:col-span-2">
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 lg:col-span-1">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <p className="text-sm text-gray-400 mb-1">Total Pending</p>
-                <p className="text-3xl font-bold text-white">{ads.length}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-400 mb-1">Today</p>
-                <p className="text-3xl font-bold text-amber-500">
-                  {ads.filter(ad => {
-                    const today = new Date().toDateString()
-                    const adDate = new Date(ad.created_at).toDateString()
-                    return today === adDate
-                  }).length}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-400 mb-1">This Week</p>
-                <p className="text-3xl font-bold text-cyan-500">
-                  {ads.filter(ad => {
-                    const weekAgo = new Date()
-                    weekAgo.setDate(weekAgo.getDate() - 7)
-                    return new Date(ad.created_at) >= weekAgo
-                  }).length}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-400 mb-1">With Images</p>
-                <p className="text-3xl font-bold text-pink-500">
-                  {ads.filter(ad => ad.images && ad.images.length > 0).length}
-                </p>
+                <div className='flex gap-4 items-center'>
+                  <p className="text-sm text-gray-400 mb-1">Total Ads</p>
+                  <button onClick={() => fetchAllAds()}>
+                    <RefreshCw className="w-4 h-4 text-gray-500 hover:text-white" />
+                  </button>
+                </div>
+                <p className="text-3xl font-bold text-white">{totalAds}</p>
               </div>
             </div>
           </div>
 
           {/* Search & Filters */}
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 lg:col-span-2">
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-400 mb-2">Search</label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <label className="block text-sm text-gray-400 mb-2">
+                  Search Ad by ID
+                </label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    <input
+                      type="text"
+                      value={searchId}
+                      onChange={(e) => setSearchId(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && searchAdById()}
+                      placeholder="Enter Ad ID..."
+                      className="w-full pl-10 pr-4 py-2 bg-gray-900/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    />
+                  </div>
+                  <button
+                    onClick={searchAdById}
+                    disabled={isSearchingById || !searchId.trim()}
+                    className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSearchingById ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      'Search'
+                    )}
+                  </button>
+                  {foundAd && (
+                    <button
+                      onClick={clearIdSearch}
+                      className="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg"
+                    >
+                      <XCircle className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                {foundAd && (
+                  <div className="mt-2 p-3 bg-cyan-500/10 border border-cyan-500/20 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-cyan-400 font-medium">
+                          Ad Found: {foundAd.title}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          ID: {foundAd.pending_ad_id}
+                        </p>
+                      </div>
+                      <button
+                        onClick={deleteFoundAd}
+                        disabled={processingId === foundAd.pending_ad_id}
+                        className="px-3 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm rounded-lg flex items-center gap-2 disabled:opacity-50"
+                      >
+                        {processingId === foundAd.pending_ad_id ? (
+                          <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                          <>
+                            <Trash2 className="w-3 h-3" />
+                            Delete
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {/* <div>
+                <label className="block text-sm text-gray-400 mb-2">Filter Ads</label>
+                <div className="flex gap-2">
                   <input
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search by title, location, or escort..."
-                    className="w-full pl-10 pr-4 py-2 bg-gray-900/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    placeholder="Search by title, location, username, ID..."
+                    className="flex-1 px-4 py-2 bg-gray-900/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
                   />
+                  <select
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    className="px-4 py-2 bg-gray-900/50 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  >
+                    <option value="all">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="week">This Week</option>
+                    <option value="month">This Month</option>
+                  </select>
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Filter by Date</label>
-                <select
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                  className="w-full px-4 py-2 bg-gray-900/50 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                >
-                  <option value="all">All Time</option>
-                  <option value="today">Today</option>
-                  <option value="week">This Week</option>
-                  <option value="month">This Month</option>
-                </select>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
@@ -341,8 +388,9 @@ export default function ManagePendingAdsPage() {
               <thead className="bg-gray-800/50">
                 <tr>
                   <th className="py-4 px-6 text-left text-sm font-medium text-gray-400">Ad</th>
+                  <th className="py-4 px-6 text-left text-sm font-medium text-gray-400">ID</th>
                   <th className="py-4 px-6 text-left text-sm font-medium text-gray-400">Images</th>
-                  <th className="py-4 px-6 text-left text-sm font-medium text-gray-400">Escort</th>
+                  <th className="py-4 px-6 text-left text-sm font-medium text-gray-400">User</th>
                   <th className="py-4 px-6 text-left text-sm font-medium text-gray-400">Location</th>
                   <th className="py-4 px-6 text-left text-sm font-medium text-gray-400">Created</th>
                   <th className="py-4 px-6 text-left text-sm font-medium text-gray-400">Actions</th>
@@ -351,14 +399,17 @@ export default function ManagePendingAdsPage() {
               <tbody className="divide-y divide-gray-700/50">
                 {filteredAds.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-12 text-center">
+                    <td colSpan={7} className="py-12 text-center">
                       <div className="flex flex-col items-center justify-center">
                         <div className="w-16 h-16 bg-gray-700/50 rounded-full flex items-center justify-center mb-4">
                           <AlertTriangle className="w-8 h-8 text-gray-500" />
                         </div>
-                        <p className="text-gray-400 text-lg mb-2">No pending ads found</p>
+                        <p className="text-gray-400 text-lg mb-2">No ads found</p>
                         <p className="text-gray-500 text-sm">
-                          {searchTerm ? 'Try a different search term' : 'All ads have been reviewed'}
+                          {foundAd 
+                            ? `No ad found with ID "${searchId}"`
+                            : searchTerm ? 'Try a different search term' : 'No ads available'
+                          }
                         </p>
                       </div>
                     </td>
@@ -367,12 +418,10 @@ export default function ManagePendingAdsPage() {
                   filteredAds.map((ad, index) => (
                     <tr 
                       key={index} 
-                      className="hover:bg-gray-700/30 cursor-pointer transition"
-                      onClick={() => setSelectedAd(ad)}
+                      className={`hover:bg-gray-700/30 transition ${foundAd?.pending_ad_id === ad.pending_ad_id ? 'bg-cyan-500/5' : ''}`}
                     >
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">
-                          {/* Afficher la première image ou un placeholder */}
                           {ad.images && ad.images.length > 0 ? (
                             <div className="relative w-10 h-10 rounded-lg overflow-hidden">
                               <Image
@@ -381,7 +430,7 @@ export default function ManagePendingAdsPage() {
                                 fill
                                 className="object-cover"
                                 sizes="40px"
-                                unoptimized // Pour les images externes
+                                unoptimized
                               />
                             </div>
                           ) : (
@@ -393,7 +442,32 @@ export default function ManagePendingAdsPage() {
                             <p className="text-sm font-medium text-white line-clamp-1 max-w-xs">
                               {ad.title}
                             </p>
+                            <a
+                              href={getAdUrl(ad)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Voir ad <ExternalLink className="w-3 h-3" />
+                            </a>
                           </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex flex-col">
+                          <code className="text-xs text-gray-300 font-mono bg-gray-800/50 px-2 py-1 rounded">
+                            {ad.pending_ad_id}
+                          </code>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(ad.pending_ad_id)
+                              toast.success('ID copied to clipboard!')
+                            }}
+                            className="text-xs text-gray-500 hover:text-gray-400 mt-1"
+                          >
+                            Copy ID
+                          </button>
                         </div>
                       </td>
                       <td className="py-4 px-6">
@@ -430,31 +504,27 @@ export default function ManagePendingAdsPage() {
                         </div>
                       </td>
                       <td className="py-4 px-6">
-                        {ad ? (
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
-                              <span className="text-white text-sm">
-                                {ad.username?.charAt(0).toUpperCase()}
-                              </span>
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-white">
-                                {ad.username}
-                              </p>
-                              <p className="text-xs text-gray-400 truncate max-w-xs">
-                                {ad.email}
-                              </p>
-                            </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
+                            <span className="text-white text-sm">
+                              {ad.username?.charAt(0).toUpperCase()}
+                            </span>
                           </div>
-                        ) : (
-                          <span className="text-gray-500">Unknown</span>
-                        )}
+                          <div>
+                            <p className="text-sm font-medium text-white">
+                              {ad.username}
+                            </p>
+                            <p className="text-xs text-gray-400 truncate max-w-xs">
+                              {ad.email}
+                            </p>
+                          </div>
+                        </div>
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-2">
                           <MapPin className="w-4 h-4 text-gray-400" />
                           <span className="text-white">
-                            {ad.city}, {ad.country}
+                            {ad.city || 'Unknown'}, {ad.country}
                           </span>
                         </div>
                       </td>
@@ -471,37 +541,27 @@ export default function ManagePendingAdsPage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              handleApprove(ad.id)
-                            }}
-                            disabled={processingId === ad.id}
-                            className="px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg flex items-center gap-1.5 disabled:opacity-50"
-                          >
-                            {processingId === ad.id ? (
-                              <div className="w-3 h-3 border-2 border-green-400 border-t-transparent rounded-full animate-spin"></div>
-                            ) : (
-                              <CheckCircle className="w-3.5 h-3.5" />
-                            )}
-                            <span className="text-sm">Approve</span>
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              openRejectModal(ad.id)
-                            }}
-                            disabled={processingId === ad.id}
-                            className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg flex items-center gap-1.5 disabled:opacity-50"
-                          >
-                            <XCircle className="w-3.5 h-3.5" />
-                            <span className="text-sm">Reject</span>
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
                               setSelectedAd(ad)
                             }}
-                            className="p-1.5 hover:bg-gray-700/50 rounded-lg"
+                            className="p-2 hover:bg-gray-700/50 rounded-lg transition"
+                            title="View Details"
                           >
                             <Eye className="w-4 h-4 text-gray-400" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              deleteFoundAd()
+                            }}
+                            disabled={processingId === ad.pending_ad_id}
+                            className="p-2 hover:bg-red-500/20 rounded-lg transition disabled:opacity-50"
+                            title="Delete Ad"
+                          >
+                            {processingId === ad.pending_ad_id ? (
+                              <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                              <Trash2 className="w-4 h-4 text-red-400" />
+                            )}
                           </button>
                         </div>
                       </td>
@@ -532,10 +592,10 @@ export default function ManagePendingAdsPage() {
                   <div>
                     <h3 className="text-xl font-semibold text-white">{selectedAd.title}</h3>
                     <div className="flex items-center gap-2 mt-2">
-                      <span className="text-sm text-gray-400">Status:</span>
-                      <span className="px-2 py-1 bg-amber-500/20 text-amber-400 rounded-full text-xs">
-                        Pending Review
-                      </span>
+                      <span className="text-sm text-gray-400">ID:</span>
+                      <code className="text-sm text-gray-300 font-mono bg-gray-800/50 px-2 py-1 rounded">
+                        {selectedAd.pending_ad_id}
+                      </code>
                     </div>
                   </div>
                   <div className="text-right">
@@ -580,16 +640,16 @@ export default function ManagePendingAdsPage() {
                       ))}
                     </div>
                     <div className="mt-4 text-sm text-gray-400">
-                      <p>Cliquez sur une image pour l'ouvrir dans un nouvel onglet.</p>
+                      <p>Click on an image to open it in a new tab.</p>
                     </div>
                   </div>
                 )}
 
-                {/* Escort Info */}
+                {/* User Info */}
                 <div>
                   <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                     <User className="w-5 h-5" />
-                    Escort Information
+                    User Information
                   </h4>
                   <div className="bg-gray-800/50 rounded-xl p-4">
                     <div className="flex items-center gap-4 mb-4">
@@ -622,23 +682,24 @@ export default function ManagePendingAdsPage() {
                     </h4>
                     <div className="bg-gray-800/50 rounded-xl p-4">
                       <p className="text-white text-xl">
-                        {selectedAd.city}, {selectedAd.country}
+                        {selectedAd.city || 'Unknown'}, {selectedAd.country}
                       </p>
                     </div>
                   </div>
                   <div>
-                    <h4 className="text-lg font-semibold text-white mb-4">Images Summary</h4>
+                    <h4 className="text-lg font-semibold text-white mb-4">Ad Information</h4>
                     <div className="bg-gray-800/50 rounded-xl p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-300">Total Images:</span>
-                        <span className="text-white font-bold">{selectedAd.images?.length || 0}</span>
-                      </div>
-                      <div className="text-sm text-gray-400">
-                        {selectedAd.images && selectedAd.images.length > 0 ? (
-                          <p>Click on images above to view full size</p>
-                        ) : (
-                          <p className="text-amber-400">No images uploaded for this ad</p>
-                        )}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-300">Images:</span>
+                          <span className="text-white font-bold">{selectedAd.images?.length || 0}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-300">User ID:</span>
+                          <code className="text-xs text-gray-400 font-mono">
+                            {selectedAd.escort_id.substring(0, 8)}...
+                          </code>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -647,42 +708,43 @@ export default function ManagePendingAdsPage() {
                 {/* Action Buttons */}
                 <div className="sticky bottom-0 bg-gray-900 pt-6 border-t border-gray-700">
                   <div className="flex gap-4">
-                    <button
-                      onClick={() => handleApprove(selectedAd.id)}
-                      disabled={processingId === selectedAd.id}
-                      className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
+                    <Link
+                      href={getAdUrl(selectedAd)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-xl flex items-center justify-center gap-2"
                     >
-                      {processingId === selectedAd.id ? (
+                      <ExternalLink className="w-5 h-5" />
+                      View ad
+                    </Link>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(selectedAd.pending_ad_id)
+                        toast.success('Ad ID copied to clipboard!')
+                      }}
+                      className="px-4 py-3 bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold rounded-xl flex items-center justify-center gap-2"
+                    >
+                      <CheckCircle className="w-5 h-5" />
+                      Copy ID
+                    </button>
+                    <button
+                      onClick={() => deleteFoundAd()}
+                      disabled={processingId === selectedAd.pending_ad_id}
+                      className="flex-1 py-3 bg-red-600/20 hover:bg-red-600/30 text-red-400 font-semibold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {processingId === selectedAd.pending_ad_id ? (
                         <>
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          Processing...
+                          <div className="w-5 h-5 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div>
+                          Deleting...
                         </>
                       ) : (
                         <>
-                          <CheckCircle className="w-5 h-5" />
-                          Approve Ad
+                          <Trash2 className="w-5 h-5" />
+                          Delete Ad
                         </>
                       )}
                     </button>
-                    <button
-                      onClick={() => openRejectModal(selectedAd.id)}
-                      disabled={processingId === selectedAd.id}
-                      className="flex-1 py-3 bg-red-600/20 hover:bg-red-600/30 text-red-400 font-semibold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
-                    >
-                      <XCircle className="w-5 h-5" />
-                      Reject Ad
-                    </button>
                   </div>
-                  {selectedAd.images && selectedAd.images.length === 0 && (
-                    <div className="mt-4 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-                      <div className="flex items-center gap-2">
-                        <AlertTriangle className="w-5 h-5 text-amber-400" />
-                        <p className="text-amber-400 text-sm">
-                          This ad has no images. Consider rejecting or asking the user to add images.
-                        </p>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -710,52 +772,6 @@ export default function ManagePendingAdsPage() {
                 className="rounded-xl object-contain max-h-[90vh]"
                 unoptimized
               />
-            </div>
-          </div>
-        )}
-
-        {/* Reject Modal */}
-        {showRejectModal && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-gray-900 rounded-2xl border border-gray-700 w-full max-w-md">
-              <div className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
-                    <XCircle className="w-6 h-6 text-red-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-white">Reject Ad</h3>
-                    <p className="text-gray-400">Provide a reason for rejection</p>
-                  </div>
-                </div>
-
-                <textarea
-                  value={rejectReason}
-                  onChange={(e) => setRejectReason(e.target.value)}
-                  placeholder="Enter rejection reason (optional)"
-                  className="w-full h-32 px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
-                />
-
-                <div className="flex gap-3 mt-6">
-                  <button
-                    onClick={handleReject}
-                    disabled={processingId === adToReject}
-                    className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl disabled:opacity-50"
-                  >
-                    {processingId === adToReject ? 'Processing...' : 'Confirm Reject'}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowRejectModal(false)
-                      setRejectReason('')
-                      setAdToReject(null)
-                    }}
-                    className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         )}

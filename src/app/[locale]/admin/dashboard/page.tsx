@@ -13,22 +13,53 @@ import {
   Settings,
   Bell,
   Search,
-  Filter
+  Filter,
+  RefreshCw
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useUser } from '@/app/[locale]/context/userContext'
+import { createClient } from '@/lib/supabase/client'
 
 export default function AdminDashboard() {
   const {user, logout} = useUser()
   const router = useRouter()
   const [adminData, setAdminData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [totalUsers, setTotalUsers] = useState(0)
+  const [totalEscorts, setTotalEscorts] = useState(0)
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalEscorts: 0,
     pendingAds: 0,
     totalRevenue: 0,
   })
+
+const fetchAllUsers = async () => {
+  try {
+    const supabase = createClient()
+
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('user_id, user_type')
+
+    if (error) {
+      throw new Error(error.message)
+    }
+
+    const totalUsersFound = users.length
+    const totalEscortsFound = users.filter(
+      user => user.user_type === 'escort'
+    ).length
+
+    setTotalUsers(totalUsersFound)
+    setTotalEscorts(totalEscortsFound)
+
+    console.log(`Fetched ${totalUsersFound} users`)
+    console.log(`Fetched ${totalEscortsFound} escorts`)
+  } catch (error: any) {
+    toast.error(error.message)
+  }
+}
 
   // useEffect(() => {
   //   fetchAdminData()
@@ -136,12 +167,17 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
-                <Users className="w-6 h-6 text-blue-400" />
+              <div className='flex gap-4 items-center'>
+                <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                  <Users className="w-6 h-6 text-blue-400" />
+                </div>
+                <button onClick={() => fetchAllUsers()}>
+                  <RefreshCw className="w-4 h-4 text-blue-400" />
+                </button>
               </div>
               <span className="text-sm text-gray-400">Total</span>
             </div>
-            <h3 className="text-3xl font-bold text-white mb-1">{stats.totalUsers.toLocaleString()}</h3>
+            <h3 className="text-3xl font-bold text-white mb-1">{totalUsers.toLocaleString()}</h3>
             <p className="text-gray-400">Registered Users</p>
           </div>
 
@@ -152,21 +188,9 @@ export default function AdminDashboard() {
               </div>
               <span className="text-sm text-gray-400">Active</span>
             </div>
-            <h3 className="text-3xl font-bold text-white mb-1">{stats.totalEscorts.toLocaleString()}</h3>
+            <h3 className="text-3xl font-bold text-white mb-1">{totalEscorts}</h3>
             <p className="text-gray-400">Escorts</p>
           </div>
-
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-yellow-500/20 rounded-xl flex items-center justify-center">
-                <AlertTriangle className="w-6 h-6 text-yellow-400" />
-              </div>
-              <span className="text-sm text-gray-400">Pending</span>
-            </div>
-            <h3 className="text-3xl font-bold text-white mb-1">{stats.pendingAds}</h3>
-            <p className="text-gray-400">Ads for Review</p>
-          </div>
-
           <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
