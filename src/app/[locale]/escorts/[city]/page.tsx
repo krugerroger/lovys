@@ -20,7 +20,7 @@ const popularCitySlugs = [
   "paris", "lyon", "marseille", "nice", "toulouse", "bordeaux", 
   "lille", "nantes", "strasbourg", "montpellier", "rennes", "grenoble",
   "aix-en-provence", "ajaccio", "amiens", "angers", "annecy",
-  "avignon", "besancon", "brest", "caen", "cannes", "clermont-ferrand",
+  "avignon", "besancon", "brest", "caen", "clermont-ferrand", "cannes",
   "dijon", "le-havre", "le-mans", "limoges", "metz", "mulhouse",
   "nancy", "orleans", "perpignan", "reims", "rouen", "saint-denis",
   "toulon", "tours", "valence"
