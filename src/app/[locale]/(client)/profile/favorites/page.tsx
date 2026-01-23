@@ -84,10 +84,8 @@ export default function FavoritesPage() {
         return;
       }
 
-      console.log(`✅ Loaded ${data?.length || 0} ads for favorites`);
       setAdsData(data || []);
     } catch (error) {
-      console.error('Error loading ads for favorites:', error);
       setAdsData([]);
     }
   };

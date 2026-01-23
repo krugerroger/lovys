@@ -143,9 +143,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       const normalizedData = normalizeToArray<PreviewAdData>(data)
       setPendingAds(normalizedData)
       
-      console.log(`✅ Loaded ${normalizedData.length} pending ad(s)`)
     } catch (err) {
-      console.error('Failed to fetch pending ads:', err)
       setPendingAds([])
     }
   }
@@ -156,7 +154,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       const { data: { user: authUser } } = await supabase.auth.getUser()
       
       if (!authUser) {
-        console.warn('No user ID provided for fetching favorites')
         setFavoriteEscorts([])
         return
       }
@@ -176,8 +173,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       const normalizedData = normalizeToArray<Favorite>(data)
       setFavoriteEscorts(normalizedData)
       
-      console.log(`✅ Loaded ${normalizedData.length} favorite escort(s)`)
-      console.log('Favorite data:', normalizedData)
     } catch (err) {
       console.error('Failed to fetch favorite escorts:', err)
       setFavoriteEscorts([])
@@ -306,7 +301,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event) => {
-        console.log("Auth changed:", event)
 
         if (event === 'SIGNED_OUT') {
           setUser(null)

@@ -45,8 +45,8 @@ export const useAdForm = ({
     }
     
     // Validation vidéo optionnelle
-    if (adData.video && adData.video.size > 15 * 1024 * 1024) {
-      newErrors.video = 'Video must be less than 15MB';
+    if (adData.video && adData.video.size > 50 * 1024 * 1024) {
+      newErrors.video = 'Video must be less than 50MB';
     }
 
     setErrors(newErrors);
@@ -89,7 +89,11 @@ export const useAdForm = ({
     } catch (error) {
       console.log('Submit error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      toast.error(`Failed to create ad: ${errorMessage}`);
+      if (errorMessage.includes('Failed to upload video')) {
+        toast.error('Veuillez renommer votre vidéo en utilisant uniquement des lettres et des chiffres, sans espaces ni caractères spéciaux.');
+      } else {
+        toast.error(`Failed to create ad: ${errorMessage}`);
+      }
       
       return {
         success: false,
