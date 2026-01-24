@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, useMemo } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Favorite, ProfileData } from '@/types/profile'
@@ -42,33 +42,33 @@ const UserContext = createContext<UserContextType>({
 })
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
+  const supabase = createClient()
+  const router = useRouter()
+  const pathname = usePathname()
+  
   const [user, setUser] = useState<ProfileData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [pendingAds, setPendingAds] = useState<PreviewAdData[]>([])
   const [favoriteEscorts, setFavoriteEscorts] = useState<Favorite[]>([])
-  const router = useRouter()
-  const pathname = usePathname()
-
-  const supabase = useMemo(() => createClient(), [])
 
   // Normalisation des données
-  const normalizeToArray = <T,>(data: any): T[] => {
+  const normalizeToArray = useCallback(<T,>(data: any): T[] => {
     if (!data) return []
     if (Array.isArray(data)) return data as T[]
     if (typeof data === 'object') return [data] as T[]
     return []
-  }
+  }, [])
 
   // Fonction pour vérifier si une annonce est en favoris
-  const isFavorite = (adId: string): boolean => {
+  const isFavorite = useCallback((adId: string): boolean => {
     if (!user || !adId) return false
     return favoriteEscorts.some(fav => 
       fav.ad_id === adId && fav.client_id === user.user_id
     )
-  }
+  }, [user, favoriteEscorts])
 
   // Fonction pour ajouter/retirer des favoris
-  const toggleFavorite = async (adId: string, escortId?: string) => {
+  const toggleFavorite = useCallback(async (adId: string, escortId?: string) => {
     if (!user) {
       console.warn('User not authenticated')
       return
@@ -115,10 +115,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       console.error('Error toggling favorite:', error)
       throw error
     }
-  }
+  }, [user, favoriteEscorts, supabase])
 
   // Fonction pour récupérer TOUTES les annonces en attente d'un escort
-  const fetchPendingAds = async () => {
+  const fetchPendingAds = useCallback(async () => {
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser()
       
@@ -144,12 +144,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       setPendingAds(normalizedData)
       
     } catch (err) {
+      console.error('Failed to fetch pending ads:', err)
       setPendingAds([])
     }
-  }
+  }, [supabase, normalizeToArray])
 
   // Fonction pour récupérer les favoris
-  const fetchFavoriteEscorts = async () => {
+  const fetchFavoriteEscorts = useCallback(async () => {
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser()
       
@@ -177,20 +178,20 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       console.error('Failed to fetch favorite escorts:', err)
       setFavoriteEscorts([])
     }
-  }
+  }, [supabase, normalizeToArray])
 
   // Fonction pour récupérer une annonce spécifique par ID
-  const getAdById = (adId: string): PreviewAdData | undefined => {
+  const getAdById = useCallback((adId: string): PreviewAdData | undefined => {
     if (!adId || pendingAds.length === 0) return undefined
     
     return pendingAds.find(ad => 
       ad.pending_ad_id === adId || 
       String(ad.pending_ad_id) === String(adId)
     )
-  }
+  }, [pendingAds])
 
   // Fonction pour récupérer les annonces par ville
-  const getAdsByCity = (city: string): PreviewAdData[] => {
+  const getAdsByCity = useCallback((city: string): PreviewAdData[] => {
     if (!city || pendingAds.length === 0) return []
     
     const normalizedCity = city.toLowerCase()
@@ -211,17 +212,17 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       
       return false
     })
-  }
+  }, [pendingAds])
 
   // Rafraîchir les annonces après certaines actions
-  const refreshAds = async () => {
+  const refreshAds = useCallback(async () => {
     if (user?.user_type === 'escort') {
       await fetchPendingAds()
     }
-  }
+  }, [user, fetchPendingAds])
 
   // Récupération des données utilisateur
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
     setIsLoading(true)
 
     try {
@@ -232,31 +233,34 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setPendingAds([])
         setFavoriteEscorts([])
         setIsLoading(false)
+        router.push('/login')
         return
       }
 
-      // Récupération du profil + solde
+      // Requêtes en parallèle pour meilleure performance
       const [profileRes, walletRes] = await Promise.all([
         supabase.from('users').select('*').eq('user_id', authUser.id).single(),
         supabase.from('wallets').select('balance').eq('user_id', authUser.id).single(),
       ])
 
-      if (profileRes.error) {
-        console.error('Profile fetch error:', profileRes.error)
+      if (profileRes.error || walletRes.error) {
+        console.error('Fetch error:', profileRes.error || walletRes.error)
         setUser(null)
         setPendingAds([])
         setFavoriteEscorts([])
         setIsLoading(false)
+        router.push('/login')
         return
       }
 
       const userData = profileRes.data || {}
+      const walletData = walletRes.data || { balance: 0 }
 
       const finalUser: ProfileData = {
         ...userData,
         user_id: authUser.id,
         email: authUser.email,
-        balance: walletRes.data?.balance ?? 0,
+        balance: walletData.balance ?? 0,
         username: userData.username || authUser.email?.split('@')[0] || 'user',
         display_name: userData.display_name || userData.username || 'User',
         user_type: userData.user_type || 'client'
@@ -276,42 +280,38 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       setUser(null)
       setPendingAds([])
       setFavoriteEscorts([])
+      router.push('/login')
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [supabase, router, fetchPendingAds, fetchFavoriteEscorts])
 
   // Logout
-const logout = async () => {
-  await supabase.auth.signOut()
-  setUser(null)
-  setPendingAds([])
-  setFavoriteEscorts([])
-  router.replace('/login')
-  // ❌ PAS DE router.refresh()
-}
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut()
+    setUser(null)
+    setPendingAds([])
+    setFavoriteEscorts([])
+    router.replace('/login')
+  }, [supabase, router])
 
+  // Auth listener - identique au projet qui fonctionne
+  useEffect(() => {
+    fetchUserData()
 
-  // Auth listener
-useEffect(() => {
-  fetchUserData()
-
-  const { data: { subscription } } =
-    supabase.auth.onAuthStateChange(async (event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
       if (event === 'SIGNED_OUT') {
         setUser(null)
         setPendingAds([])
         setFavoriteEscorts([])
-      }
-
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        router.push('/login')
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         await fetchUserData()
       }
     })
 
-  return () => subscription.unsubscribe()
-}, []) // ✅ UNE SEULE FOIS
-
+    return () => subscription?.unsubscribe()
+  }, [supabase, router, fetchUserData])
 
   return (
     <UserContext.Provider value={{
