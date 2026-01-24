@@ -131,21 +131,20 @@ export default function CityRankingPage() {
     const normalizedCity = cityParam.toLowerCase()
     
     return [...ads].sort((a, b) => {
+      // Pour l'annonce A : prendre la date la plus récente
       const aBoostedAt = a.city_boosted_at?.[normalizedCity];
+      const aCreatedAt = new Date(a.created_at).getTime();
+      const aBoostedAtTime = aBoostedAt ? new Date(aBoostedAt).getTime() : 0;
+      const aLatestDate = Math.max(aCreatedAt, aBoostedAtTime);
+      
+      // Pour l'annonce B : prendre la date la plus récente
       const bBoostedAt = b.city_boosted_at?.[normalizedCity];
+      const bCreatedAt = new Date(b.created_at).getTime();
+      const bBoostedAtTime = bBoostedAt ? new Date(bBoostedAt).getTime() : 0;
+      const bLatestDate = Math.max(bCreatedAt, bBoostedAtTime);
       
-      if (aBoostedAt && bBoostedAt) {
-        const aBoostTime = new Date(aBoostedAt).getTime();
-        const bBoostTime = new Date(bBoostedAt).getTime();
-        return bBoostTime - aBoostTime;
-      }
-      
-      if (aBoostedAt && !bBoostedAt) return -1;
-      if (!aBoostedAt && bBoostedAt) return 1;
-      
-      const aCreatedTime = new Date(a.created_at).getTime();
-      const bCreatedTime = new Date(b.created_at).getTime();
-      return bCreatedTime - aCreatedTime;
+      // Trier par date la plus récente d'abord
+      return bLatestDate - aLatestDate;
     })
   }
 
@@ -523,7 +522,7 @@ export default function CityRankingPage() {
                       <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${getPositionColor(rankedAd.position)}`}>
                         {getPositionIcon(rankedAd.position)}
                         <span className="font-bold text-sm">
-                          {t('adCard.positionBadge', { position: rankedAd.position, total: rankedAd.total })}
+                          #{rankedAd.position}/{rankedAd.total}
                         </span>
                       </div>
                       

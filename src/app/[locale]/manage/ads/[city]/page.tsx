@@ -471,7 +471,7 @@ export default function CityAdsPage() {
                     </div>
                     <div className="flex items-center gap-1 text-sm text-gray-600">
                       <Clock className="w-4 h-4" />
-                      <span>{t('adCard.thirtyMinutes')} {ad.rates?.thirtyMinutes ? formatPrice(ad.rates.thirtyMinutes) : 'N/A'}</span>
+                      <span>{t('adCard.thirtyMinutes')} {ad.rates.thirtyMinutes ? formatPrice(ad.rates.thirtyMinutes) : 'N/A'}</span>
                     </div>
                   </div>
                 </div>

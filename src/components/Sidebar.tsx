@@ -27,7 +27,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
       setIsLoggingOut(true);
       await logout();
       toast.success(t('messages.signOutSuccess'));
-      router.push('/Login');
+      router.push('/login');
     } catch (error) {
       console.error(t('messages.signOutError'), error);
       toast.error(t('messages.signOutError'));

@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { Edit, ArrowUp, MapPin, Clock, Crown, TrendingUp, Star, BarChart, AlertCircle, Loader2 } from 'lucide-react'
+import { Edit, ArrowUp, MapPin, Clock, Crown, TrendingUp, Star, BarChart, AlertCircle, Loader2, Trash2 } from 'lucide-react'
 import { useUser } from '@/app/[locale]/context/userContext'
 import { toast } from 'sonner'
 import { useRouter, useParams } from 'next/navigation'
@@ -104,24 +104,20 @@ export default function ModelManagementPage() {
     
     // Trier selon la logique simple
     return [...ads].sort((a, b) => {
+        // Pour l'annonce A : prendre la date la plus récente
       const aBoostedAt = a.city_boosted_at?.[normalizedCity];
+      const aCreatedAt = new Date(a.created_at).getTime();
+      const aBoostedAtTime = aBoostedAt ? new Date(aBoostedAt).getTime() : 0;
+      const aLatestDate = Math.max(aCreatedAt, aBoostedAtTime);
+      
+      // Pour l'annonce B : prendre la date la plus récente
       const bBoostedAt = b.city_boosted_at?.[normalizedCity];
+      const bCreatedAt = new Date(b.created_at).getTime();
+      const bBoostedAtTime = bBoostedAt ? new Date(bBoostedAt).getTime() : 0;
+      const bLatestDate = Math.max(bCreatedAt, bBoostedAtTime);
       
-      // Cas 1: Les deux annonces sont boostées => trier par date de boost (la plus récente d'abord)
-      if (aBoostedAt && bBoostedAt) {
-        const aBoostTime = new Date(aBoostedAt).getTime();
-        const bBoostTime = new Date(bBoostedAt).getTime();
-        return bBoostTime - aBoostTime; // DESC: les plus récentes d'abord
-      }
-      
-      // Cas 2: Une seule est boostée => celle boostée passe avant
-      if (aBoostedAt && !bBoostedAt) return -1;
-      if (!aBoostedAt && bBoostedAt) return 1;
-      
-      // Cas 3: Aucune n'est boostée => trier par date de création (la plus récente d'abord)
-      const aCreatedTime = new Date(a.created_at).getTime();
-      const bCreatedTime = new Date(b.created_at).getTime();
-      return bCreatedTime - aCreatedTime; // DESC: les plus récentes d'abord
+      // Trier par date la plus récente d'abord
+      return bLatestDate - aLatestDate;
     })
   }
 
@@ -274,6 +270,45 @@ export default function ModelManagementPage() {
     }
   }
 
+  const handleDeleteAd = async () => {
+  if (!pendingAd?.pending_ad_id) {
+    toast.error(t('messages.deleteError'))
+    return
+  }
+
+  setLoading(true)
+  try {
+    const res = await fetch(`/api/ads/delete/${pendingAd.pending_ad_id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+
+    const data = await res.json()
+
+    if (!res.ok) {
+      throw new Error(data.error || `Erreur ${res.status}`)
+    }
+
+    if (data.success) {
+      toast.success(t('messages.deleteSuccess'))
+      // Rediriger vers la liste des annonces
+      router.push('/manage/chat/threads')
+    } else {
+      throw new Error(data.error || t('messages.deleteGenericError'))
+    }
+  } catch (error) {
+    console.error('Delete error:', error)
+    toast(
+      error instanceof Error 
+        ? error.message 
+        : t('messages.deleteConnectionError')
+    )
+  } finally {
+    setLoading(false)
+  }
+}
   // Formatage du temps écoulé
   const formatTimeAgo = (timestamp: string) => {
     try {
@@ -556,26 +591,50 @@ export default function ModelManagementPage() {
               <h2 className="text-xl font-bold text-gray-800 mb-4">
                 {t('actions.title')}
               </h2>
-              <div className="space-y-4">
-                <button
-                  onClick={() => router.push(`/manage/ads/${city}/${pendingAd?.pending_ad_id}/update`)}
-                  className="w-full p-4 bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 hover:border-green-300 hover:shadow-md transition-all duration-300 flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                      <Edit className="w-5 h-5 text-green-600" />
+                <div className="space-y-4">
+                  <button
+                    onClick={() => router.push(`/manage/ads/${city}/${pendingAd?.pending_ad_id}/update`)}
+                    className="w-full p-4 bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 hover:border-green-300 hover:shadow-md transition-all duration-300 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <Edit className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-semibold text-gray-800">
+                          {t('actions.editProfile')}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {t('actions.editDescription')}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-left">
-                      <p className="font-semibold text-gray-800">
-                        {t('actions.editProfile')}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {t('actions.editDescription')}
-                      </p>
+                  </button>
+
+                  {/* NOUVEAU BOUTON SUPPRIMER */}
+                  <button
+                    onClick={handleDeleteAd}
+                    disabled={loading}
+                    className="w-full p-4 bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 hover:border-red-300 hover:shadow-md transition-all duration-300 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                        <Trash2 className="w-5 h-5 text-red-600" />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-semibold text-gray-800">
+                          {t('actions.deleteAd')}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {t('actions.deleteDescription')}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </button>
-              </div>
+                    {loading && (
+                      <div className="w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                    )}
+                  </button>
+                </div>
             </div>
           </div>
 

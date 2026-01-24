@@ -282,38 +282,36 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }
 
   // Logout
-  const logout = async () => {
-    try {
-      await supabase.auth.signOut({ scope: 'local' })
-      setUser(null)
-      setPendingAds([])
-      setFavoriteEscorts([])
-      router.replace('/login')
-      router.refresh()
-    } catch (error) {
-      console.error('Logout failed:', error)
-    }
-  }
+const logout = async () => {
+  await supabase.auth.signOut()
+  setUser(null)
+  setPendingAds([])
+  setFavoriteEscorts([])
+  router.replace('/login')
+  // ❌ PAS DE router.refresh()
+}
+
 
   // Auth listener
-  useEffect(() => {
-    fetchUserData()
+useEffect(() => {
+  fetchUserData()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event) => {
-
-        if (event === 'SIGNED_OUT') {
-          setUser(null)
-          setPendingAds([])
-          setFavoriteEscorts([])
-        } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          await fetchUserData()
-        }
+  const { data: { subscription } } =
+    supabase.auth.onAuthStateChange(async (event) => {
+      if (event === 'SIGNED_OUT') {
+        setUser(null)
+        setPendingAds([])
+        setFavoriteEscorts([])
       }
-    )
 
-    return () => subscription.unsubscribe()
-  }, [pathname])
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        await fetchUserData()
+      }
+    })
+
+  return () => subscription.unsubscribe()
+}, []) // ✅ UNE SEULE FOIS
+
 
   return (
     <UserContext.Provider value={{

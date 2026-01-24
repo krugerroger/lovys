@@ -34,16 +34,16 @@ interface PageProps {
 async function getCityAds(cityName: string) {
   try {
     const supabase = createClient();
-    
     const { data: { user } } = await supabase.auth.getUser();
     const currentUserId = user?.id;
+    const normalizedCity = cityName.toLowerCase();
     
+    // Récupérer toutes les annonces approuvées pour cette ville
     const { data: ads, error } = await supabase
       .from('pending_ads')
-      .select('*, city_boosted_at')
+      .select('*')
       .eq('status', 'approved')
-      .ilike('location->>city', `%${cityName}%`)
-      .order('created_at', { ascending: false });
+      .ilike('location->>city', `%${cityName}%`);
 
     if (error) {
       console.error('Supabase error:', error);
@@ -52,6 +52,7 @@ async function getCityAds(cityName: string) {
 
     let filteredAds = ads || [];
     
+    // Filtrer les annonces blacklistées
     if (currentUserId && filteredAds.length > 0) {
       const escortIds = filteredAds.map(ad => ad.escort_id).filter(id => id);
       
@@ -70,25 +71,38 @@ async function getCityAds(cityName: string) {
         }
       }
     }
-
-    const normalizedCity = cityName.toLowerCase();
     
+    // TRI : Utiliser la date la plus récente entre created_at et city_boosted_at
     const sortedAds = [...filteredAds].sort((a, b) => {
+      // Pour l'annonce A : prendre la date la plus récente
       const aBoostedAt = a.city_boosted_at?.[normalizedCity];
+      const aCreatedAt = new Date(a.created_at).getTime();
+      const aBoostedAtTime = aBoostedAt ? new Date(aBoostedAt).getTime() : 0;
+      const aLatestDate = Math.max(aCreatedAt, aBoostedAtTime);
+      
+      // Pour l'annonce B : prendre la date la plus récente
       const bBoostedAt = b.city_boosted_at?.[normalizedCity];
+      const bCreatedAt = new Date(b.created_at).getTime();
+      const bBoostedAtTime = bBoostedAt ? new Date(bBoostedAt).getTime() : 0;
+      const bLatestDate = Math.max(bCreatedAt, bBoostedAtTime);
       
-      if (aBoostedAt && bBoostedAt) {
-        const aBoostTime = new Date(aBoostedAt).getTime();
-        const bBoostTime = new Date(bBoostedAt).getTime();
-        return bBoostTime - aBoostTime;
-      }
+      // Trier par date la plus récente d'abord
+      return bLatestDate - aLatestDate;
+    });
+
+    // Ajouter des informations de debug
+    console.log('=== TRI DES ANNONCES ===');
+    sortedAds.forEach((ad, index) => {
+      const boostedAt = ad.city_boosted_at?.[normalizedCity];
+      const createdTime = new Date(ad.created_at).getTime();
+      const boostTime = boostedAt ? new Date(boostedAt).getTime() : 0;
+      const latestTime = Math.max(createdTime, boostTime);
       
-      if (aBoostedAt && !bBoostedAt) return -1;
-      if (!aBoostedAt && bBoostedAt) return 1;
-      
-      const aCreatedTime = new Date(a.created_at).getTime();
-      const bCreatedTime = new Date(b.created_at).getTime();
-      return bCreatedTime - aCreatedTime;
+      console.log(`${index + 1}. ${ad.title}`);
+      console.log(`   Créée: ${ad.created_at} (${new Date(createdTime).toLocaleString()})`);
+      console.log(`   Boost: ${boostedAt || 'Non'} (${boostTime ? new Date(boostTime).toLocaleString() : 'N/A'})`);
+      console.log(`   Date utilisée: ${new Date(latestTime).toLocaleString()}`);
+      console.log('---');
     });
 
     const adsWithRank = sortedAds.map((ad, index) => ({

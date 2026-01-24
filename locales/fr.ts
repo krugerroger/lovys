@@ -885,7 +885,9 @@ export default {
         actions: {
           title: "Actions",
           editProfile: "Éditer le profil",
-          editDescription: "Modifier vos informations"
+          editDescription: "Modifier vos informations",
+          deleteAd: "Supprimer l'annonce",
+          deleteDescription: "Supprimer définitivement cette annonce"
         },
         boost: {
           title: "Remonter à",
@@ -917,8 +919,13 @@ export default {
           boostSuccess: "Remontée à réussie !",
           boostConnectionError: "Erreur de connexion",
           boostGenericError: "Une erreur est survenue",
-          dateInvalid: "Date invalide"
-        }
+          dateInvalid: "Date invalide",
+          deleteError: "Impossible de supprimer l'annonce",
+          deleteConfirm: "Êtes-vous sûr de vouloir supprimer l'annonce \"{title}\" de {city} ? Cette action est irréversible.",
+          deleteSuccess: "Annonce supprimée avec succès",
+          deleteGenericError: "Échec de la suppression",
+          deleteConnectionError: "Erreur de connexion"
+        },
     },
     Create: {
       title: "Créer une annonce",

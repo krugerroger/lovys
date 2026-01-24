@@ -499,7 +499,7 @@ export default function LadysOneHome() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {featuredEscorts.map((escort) => (
                 <EscortCard
-                  key={escort.escort_id}
+                  key={escort.pending_ad_id}
                   ad={escort}
                   showActions={true}
                   city={
