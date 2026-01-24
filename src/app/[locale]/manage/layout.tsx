@@ -14,38 +14,27 @@ export default function ManageLayout({ children }: ManageLayoutProps) {
   const { user, isLoading } = useUser();
   const router = useRouter()
   const pathname = usePathname()
-  const [isChecking, setIsChecking] = useState(true)
+const [isChecking, setIsChecking] = useState<boolean | null>(null)
 
-  useEffect(() => {
-    // Vérifier l'authentification et les autorisations
-    if (!isLoading) {
-      // 1. Vérifier si l'utilisateur est connecté
-      if (!user) {
-        console.log('No user found, redirecting to login')
-        const redirectPath = encodeURIComponent(pathname)
-        router.replace(`/login?redirect=${redirectPath}`)
-        return
-      }
 
-      // 2. Vérifier si l'utilisateur est une escort
-      if (user.user_type !== 'escort') {
-        console.log(`User type ${user.user_type} not allowed for manage section`)
-        
-        // Rediriger selon le type d'utilisateur
-        if (user.user_type === 'client') {
-          router.replace('/profile')
-        } else if (user.user_type === 'admin') {
-          router.replace('/admin/dashboard')
-        } else {
-          router.replace('/')
-        }
-        return
-      }
+useEffect(() => {
+  if (isChecking !== null) return
 
-      // 3. Toutes les vérifications sont passées
-      setIsChecking(false)
+  if (!isLoading) {
+    if (!user) {
+      router.replace(`/login?redirect=${encodeURIComponent(pathname)}`)
+      return
     }
-  }, [user, isLoading, router, pathname])
+
+    if (user.user_type !== 'escort') {
+      router.replace('/')
+      return
+    }
+
+    setIsChecking(false)
+  }
+}, [user, isLoading])
+
 
   // Écran de chargement pendant la vérification
   if (isLoading || isChecking) {

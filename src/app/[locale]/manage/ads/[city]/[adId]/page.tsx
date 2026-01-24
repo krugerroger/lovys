@@ -38,11 +38,8 @@ export default function ModelManagementPage() {
 
     const adFromContext = getAdById(adId)
 
-    console.log('adFromContext datas:', adFromContext)
-
     if (adFromContext) {
       setPendingAd(adFromContext)
-      console.log('Annonce trouvée dans le contexte:', adFromContext)
     }
   }, [adId, pendingAds, getAdById])
 
@@ -88,7 +85,6 @@ export default function ModelManagementPage() {
         return false
       })
 
-      console.log('Filtered ads in city', city, ':', filteredAds.length)
       return filteredAds
     } catch (error) {
       console.error('Direct Supabase fetch failed:', error)
@@ -130,17 +126,13 @@ export default function ModelManagementPage() {
     
     try {
       const ads = await fetchAdsDirectly()
-      console.log('Ads for position calculation:', ads.length)
       
       // Vérifier si notre annonce est dans la liste
       const currentAdId = getAdId()
-      console.log('Current ad ID to find:', currentAdId)
       
       const isOurAdInList = ads.some((ad: any) => ad.pending_ad_id === currentAdId)
-      console.log('Is our ad in the list?', isOurAdInList)
       
       if (ads.length === 0 || !isOurAdInList) {
-        console.log('Our ad is not in the list.')
         setPositionInfo({
           position: 0,
           total: ads.length,
@@ -153,19 +145,11 @@ export default function ModelManagementPage() {
       // Trier les annonces selon la nouvelle logique
       const sortedAds = calculateSortedAds(ads)
       
-      console.log('Sorted ads (first 5):', sortedAds.slice(0, 5).map((ad, idx) => ({
-        position: idx + 1,
-        id: ad.pending_ad_id,
-        boost: ad.city_boosted_at?.[city.toLowerCase()],
-        created: ad.created_at
-      })))
-      
       // Trouver la position de notre annonce
       const positionIndex = sortedAds.findIndex((ad: any) => 
         ad.pending_ad_id === currentAdId
       )
 
-      console.log('Found at position index:', positionIndex)
       
       if (positionIndex === -1) {
         setPositionInfo({
@@ -180,7 +164,6 @@ export default function ModelManagementPage() {
       const position = positionIndex + 1
       const total = sortedAds.length
       
-      console.log(`Final position: ${position} / ${total}`)
       
       setPositionInfo({
         position,
