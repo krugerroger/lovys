@@ -172,22 +172,93 @@ export async function generateStaticParams() {
   return params;
 }
 
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ locale: string; city: string }>;
 }): Promise<Metadata> {
   const { locale, city } = await params;
-  
+
+  const cityName = city.replace(/-/g, " ");
+
+  const title = `Independent Escorts in ${cityName} | Verified Local Profiles`;
+  const description =
+    `Discover verified, independent escorts in ${cityName}. Browse local profiles, view availability, and connect discreetly with trusted companions near you.`;
+
   return {
-    title: `Escorts à ${city} | VotreSite`,
-    description: `Trouvez des escortes à ${city}. Profitez de nos services...`,
+    title,
+    description,
+
+    keywords: [
+      `escort ${cityName}`,
+      `escorts in ${cityName}`,
+      `independent escorts ${cityName}`,
+      `local escort services ${cityName}`,
+      "escort directory",
+      "verified escorts",
+      "local companions",
+    ],
+
+    alternates: {
+      canonical: `/${locale}/escorts/${city}`,
+      languages: {
+        en: `/en/escorts/${city}`,
+        fr: `/fr/escortes/${city}`,
+        de: `/de/escorts/${city}`,
+        es: `/es/escorts/${city}`,
+        pt: `/pt/escorts/${city}`,
+      },
+    },
+
     openGraph: {
-      title: `Escorts à ${city}`,
-      description: `Escortes disponibles à ${city}`,
+      title: `Independent Escorts in ${cityName}`,
+      description:
+        `Browse trusted and verified independent escorts in ${cityName}. Location-based profiles and discreet connections.`,
+      url: `https://lovira.one/${locale}/escorts/${city}`,
+      siteName: "Lovira",
+      images: [
+        {
+          url: "/favicon.png",
+          width: 1200,
+          height: 630,
+          alt: `Independent escorts in ${cityName}`,
+        },
+      ],
+      locale:
+        locale === "fr"
+          ? "fr_FR"
+          : locale === "de"
+          ? "de_DE"
+          : locale === "es"
+          ? "es_ES"
+          : locale === "pt"
+          ? "pt_PT"
+          : "en_US",
+      type: "website",
+    },
+
+    twitter: {
+      card: "summary_large_image",
+      title: `Escorts in ${cityName} | Lovira`,
+      description:
+        `Find independent and verified escorts in ${cityName}. Browse local profiles safely and discreetly.`,
+      images: ["/favicon.png"],
+    },
+
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+      },
     },
   };
 }
+
 
 export default async function CityEscortsPage({ params }: PageProps) {
   const { locale, city } = await params;
@@ -348,7 +419,7 @@ export default async function CityEscortsPage({ params }: PageProps) {
             </div>
 
             {/* Résumé du classement */}
-            <div className="mt-12 p-6 bg-gray-800 rounded-2xl border border-gray-700 shadow-lg shadow-black/20">
+            {/* <div className="mt-12 p-6 bg-gray-800 rounded-2xl border border-gray-700 shadow-lg shadow-black/20">
               <h3 className="text-lg font-bold text-white mb-4">{t('CityPage.about.title')}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -386,9 +457,9 @@ export default async function CityEscortsPage({ params }: PageProps) {
                   </ul>
                 </div>
               </div>
-            </div>
+            </div> */}
 
-            {/* Pagination */}
+            {/* Pagination
             {ads.length > 12 && (
               <div className="flex justify-center items-center gap-2 mt-12">
                 <button className="px-6 py-3 bg-gray-800 border border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors shadow-lg shadow-black/20">
@@ -407,7 +478,7 @@ export default async function CityEscortsPage({ params }: PageProps) {
                   {t('CityPage.pagination.next')}
                 </button>
               </div>
-            )}
+            )} */}
           </>
         )}
 

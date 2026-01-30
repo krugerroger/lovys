@@ -225,7 +225,7 @@ export default function EscortCard({ ad, showActions = true, adId, city }: Escor
           <div className="flex justify-between items-start mb-4">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <h3 className="text-lg font-bold text-pink-300">
+                <h3 className="text-md font-bold text-pink-300 line-clamp-2">
                   {ad.title || ad.username}
                 </h3>
                 {ad.verified && (

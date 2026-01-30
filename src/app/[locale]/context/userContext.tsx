@@ -228,14 +228,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data: { user: authUser }, error } = await supabase.auth.getUser()
 
-      if (error || !authUser) {
-        setUser(null)
-        setPendingAds([])
-        setFavoriteEscorts([])
-        setIsLoading(false)
-        router.push('/login')
-        return
-      }
+    if (!authUser) {
+      setUser(null)
+      setPendingAds([])
+      setFavoriteEscorts([])
+      return
+    }
 
       // Requêtes en parallèle pour meilleure performance
       const [profileRes, walletRes] = await Promise.all([
@@ -243,48 +241,35 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         supabase.from('wallets').select('balance').eq('user_id', authUser.id).single(),
       ])
 
-      if (profileRes.error || walletRes.error) {
-        console.error('Fetch error:', profileRes.error || walletRes.error)
-        setUser(null)
-        setPendingAds([])
-        setFavoriteEscorts([])
-        setIsLoading(false)
-        router.push('/login')
-        return
-      }
+    if (profileRes.error || walletRes.error) {
+      setUser(null)
+      return
+    }
 
-      const userData = profileRes.data || {}
-      const walletData = walletRes.data || { balance: 0 }
+    const userData = profileRes.data
+    const walletData = walletRes.data
 
-      const finalUser: ProfileData = {
-        ...userData,
-        user_id: authUser.id,
-        email: authUser.email,
-        balance: walletData.balance ?? 0,
-        username: userData.username || authUser.email?.split('@')[0] || 'user',
-        display_name: userData.display_name || userData.username || 'User',
-        user_type: userData.user_type || 'client'
-      }
-
-      setUser(finalUser)
+    setUser({
+      ...userData,
+      user_id: authUser.id,
+      email: authUser.email,
+      balance: walletData.balance ?? 0,
+      username: userData.username ?? 'user',
+      display_name: userData.display_name ?? 'User',
+      user_type: userData.user_type ?? 'client'
+    })
 
       // Récupérer les données selon le type d'utilisateur
-      if (userData.user_type === 'escort') {
-        await fetchPendingAds()
-      } else if (userData.user_type === 'client') {
-        await fetchFavoriteEscorts()
-      }
-
-    } catch (err) {
-      console.error('Failed to fetch user:', err)
-      setUser(null)
-      setPendingAds([])
-      setFavoriteEscorts([])
-      router.push('/login')
-    } finally {
-      setIsLoading(false)
+ if (userData.user_type === 'escort') {
+      await fetchPendingAds()
+    } else if (userData.user_type === 'client') {
+      await fetchFavoriteEscorts()
     }
-  }, [supabase, router, fetchPendingAds, fetchFavoriteEscorts])
+
+  } finally {
+    setIsLoading(false)
+  }
+}, [supabase, fetchPendingAds, fetchFavoriteEscorts])
 
   // Logout
   const logout = useCallback(async () => {
@@ -299,19 +284,17 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     fetchUserData()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') {
         setUser(null)
         setPendingAds([])
         setFavoriteEscorts([])
-        router.push('/login')
-      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        await fetchUserData()
       }
     })
 
     return () => subscription?.unsubscribe()
-  }, [supabase, router, fetchUserData])
+  }, [fetchUserData])
+
 
   return (
     <UserContext.Provider value={{

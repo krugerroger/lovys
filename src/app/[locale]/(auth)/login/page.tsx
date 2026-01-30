@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { signIn } from '@/lib/supabase/auth-action';
 import { useI18n, useScopedI18n } from '../../../../../locales/client';
+import { Separator } from '@/components/ui/separator';
 
 export default function SignInForm() {
   const router = useRouter();
@@ -252,7 +253,8 @@ export default function SignInForm() {
                     </div>
                   </div>
                 </div>
-
+                <Separator className='bg-gray-700/50' />
+{/* 
                 <div className="pt-6 border-t border-gray-700/50">
                   <h4 className="font-semibold text-white mb-3">
                     {t('features.title')}
@@ -271,7 +273,7 @@ export default function SignInForm() {
                       {t('features.easyAccountManagement')}
                     </li>
                   </ul>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
