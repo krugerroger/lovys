@@ -26,6 +26,7 @@ export default function Header() {
               alt={t('logoAlt')} 
               width={120} 
               height={60} 
+              unoptimized
             />
           </div>
         </Link>

@@ -166,6 +166,7 @@ export default function EscortCard({ ad, showActions = true, adId, city }: Escor
                     alt={ad.title || ad.username}
                     className="object-cover"
                     fill
+                    unoptimized
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
                 </Link>

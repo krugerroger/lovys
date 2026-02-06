@@ -113,6 +113,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
               alt={t('logoAlt')} 
               width={120} 
               height={60} 
+              unoptimized
             />
           </Link>
           <button

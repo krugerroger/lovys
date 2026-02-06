@@ -7,6 +7,10 @@ import { getScopedI18n } from '../../../../../locales/server';
 import { setStaticParamsLocale } from 'next-international/server';
 import { Metadata } from 'next';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+
 // Fonction pour formater le slug en nom de ville
 const formatCityName = (slug: string) => {
   return slug
@@ -155,21 +159,6 @@ function RankBadge({ rank, total }: { rank: number; total: number }) {
       </div>
     </div>
   );
-}
-
-// Générer les chemins statiques
-export async function generateStaticParams() {
-  // Générer pour toutes les locales et villes
-  const locales = ['fr', 'en'];
-  const params = [];
-  
-  for (const locale of locales) {
-    for (const city of popularCitySlugs) {
-      params.push({ locale, city });
-    }
-  }
-  
-  return params;
 }
 
 

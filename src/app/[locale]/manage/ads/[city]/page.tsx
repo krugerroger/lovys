@@ -370,6 +370,7 @@ export default function CityAdsPage() {
                     src={ad.images[0]}
                     alt={ad.title || t('adCard.untitled')}
                     fill
+                    unoptimized
                     className="object-cover"
                     sizes="(max-width: 768px) 100vw, 50vw"
                   />
