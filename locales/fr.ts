@@ -597,6 +597,12 @@ export default {
       nearby: {
         title: "Explorez d'autres villes",
         viewAll: "Voir toutes les villes →"
+      },
+      load: {
+        loadMore: "Voir plus",
+        showing: "Affichage de",
+        of: "sur",
+        ads: "annonces"
       }
     },
     ProfilePage: {

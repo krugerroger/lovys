@@ -69,6 +69,9 @@ async function getSimilarAds(cityName: string, excludeAdId: number) {
 export default async function EscortProfilePage({ params }: PageProps) {
   const { city, adId } = await params;
   const cityName = city;
+  const message = encodeURIComponent(
+  "Bonjour 👋,\n\nJe vous contacte via le site Lovira.one.\n\nJe suis intéressé(e) par votre annonce et j’aimerais avoir plus d’informations concernant vos disponibilités, vos services et vos tarifs.\n\nMerci 🙂"
+);
 
   const serviceLabels: Record<ServiceKey, string> = {
     analSex: "Sexe anal",
@@ -276,7 +279,7 @@ export default async function EscortProfilePage({ params }: PageProps) {
                     <div className="flex flex-wrap gap-3 pt-2">
                       {ad.contacts.whatsapp && (
                         <a
-                          href={`https://wa.me/${ad.contacts.whatsapp}`}
+                          href={`https://wa.me/${ad.contacts?.whatsapp}?text=${message}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-2 text-green-400 hover:text-green-300 text-sm"
@@ -430,11 +433,24 @@ export default async function EscortProfilePage({ params }: PageProps) {
                     </div>
                   </div>
                 )}
-                
-                <button className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg font-semibold hover:opacity-90 transition flex items-center justify-center gap-2">
-                  <MessageSquare className="w-4 h-4" />
-                  Envoyer un message
-                </button>
+                {ad.contacts?.whatsapp && (
+                  <div className="flex items-center gap-3 p-3 bg-gray-900/50 rounded-lg">
+                    <MessageCircle className="w-5 h-5 text-pink-400" />
+                    <div>
+                      <p className="text-sm text-gray-400">Whatsapp</p>
+                      <p className="font-medium">{ad.contacts.whatsapp}</p>
+                    </div>
+                  </div>
+                )}
+                  <a
+                    href={`https://wa.me/${ad.contacts?.whatsapp}?text=${message}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3 bg-green-500 rounded-lg font-semibold hover:opacity-90 transition flex items-center justify-center gap-2"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    Whatsapp
+                  </a>
               </div>
             </div>
 

@@ -6,10 +6,10 @@ import Link from 'next/link';
 import { getScopedI18n } from '../../../../../locales/server';
 import { setStaticParamsLocale } from 'next-international/server';
 import { Metadata } from 'next';
+import AdsGrid from '@/components/Adsgrid';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-
 
 // Fonction pour formater le slug en nom de ville
 const formatCityName = (slug: string) => {
@@ -42,7 +42,6 @@ async function getCityAds(cityName: string) {
     const currentUserId = user?.id;
     const normalizedCity = cityName.toLowerCase();
     
-    // Récupérer toutes les annonces approuvées pour cette ville
     const { data: ads, error } = await supabase
       .from('pending_ads')
       .select('*')
@@ -56,7 +55,6 @@ async function getCityAds(cityName: string) {
 
     let filteredAds = ads || [];
     
-    // Filtrer les annonces blacklistées
     if (currentUserId && filteredAds.length > 0) {
       const escortIds = filteredAds.map(ad => ad.escort_id).filter(id => id);
       
@@ -76,32 +74,26 @@ async function getCityAds(cityName: string) {
       }
     }
     
-    // TRI : Utiliser la date la plus récente entre created_at et city_boosted_at
     const sortedAds = [...filteredAds].sort((a, b) => {
-      // Pour l'annonce A : prendre la date la plus récente
       const aBoostedAt = a.city_boosted_at?.[normalizedCity];
       const aCreatedAt = new Date(a.created_at).getTime();
       const aBoostedAtTime = aBoostedAt ? new Date(aBoostedAt).getTime() : 0;
       const aLatestDate = Math.max(aCreatedAt, aBoostedAtTime);
       
-      // Pour l'annonce B : prendre la date la plus récente
       const bBoostedAt = b.city_boosted_at?.[normalizedCity];
       const bCreatedAt = new Date(b.created_at).getTime();
       const bBoostedAtTime = bBoostedAt ? new Date(bBoostedAt).getTime() : 0;
       const bLatestDate = Math.max(bCreatedAt, bBoostedAtTime);
       
-      // Trier par date la plus récente d'abord
       return bLatestDate - aLatestDate;
     });
 
-    // Ajouter des informations de debug
     console.log('=== TRI DES ANNONCES ===');
     sortedAds.forEach((ad, index) => {
       const boostedAt = ad.city_boosted_at?.[normalizedCity];
       const createdTime = new Date(ad.created_at).getTime();
       const boostTime = boostedAt ? new Date(boostedAt).getTime() : 0;
       const latestTime = Math.max(createdTime, boostTime);
-      
       console.log(`${index + 1}. ${ad.title}`);
       console.log(`   Créée: ${ad.created_at} (${new Date(createdTime).toLocaleString()})`);
       console.log(`   Boost: ${boostedAt || 'Non'} (${boostTime ? new Date(boostTime).toLocaleString() : 'N/A'})`);
@@ -123,44 +115,6 @@ async function getCityAds(cityName: string) {
   }
 }
 
-// Composant pour afficher le badge de rang
-function RankBadge({ rank, total }: { rank: number; total: number }) {
-  const getRankColor = () => {
-    if (rank === 1) return 'from-yellow-500 to-amber-500 text-gray-900';
-    if (rank === 2) return 'from-gray-400 to-gray-600 text-white';
-    if (rank === 3) return 'from-amber-700 to-amber-900 text-white';
-    if (rank <= 10) return 'from-blue-500 to-indigo-600 text-white';
-    if (rank <= 20) return 'from-purple-500 to-purple-700 text-white';
-    return 'from-gray-700 to-gray-900 text-gray-300';
-  };
-
-  const getRankIcon = () => {
-    if (rank === 1) return <Crown className="w-3 h-3" />;
-    if (rank <= 3) return <TrendingUp className="w-3 h-3" />;
-    if (rank <= 10) return <Star className="w-3 h-3" fill="currentColor" />;
-    return null;
-  };
-
-  const getRankText = () => {
-    if (rank === 1) return 'TOP 1';
-    if (rank === 2) return 'TOP 2';
-    if (rank === 3) return 'TOP 3';
-    return `#${rank}`;
-  };
-
-  return (
-    <div className={`absolute top-3 left-3 z-20 flex flex-col items-center gap-1`}>
-      <div className={`bg-gradient-to-br ${getRankColor()} px-3 py-1.5 rounded-full font-bold text-sm flex items-center gap-1 shadow-lg shadow-black/30`}>
-        {getRankIcon()}
-        <span>{getRankText()}</span>
-      </div>
-      <div className="text-xs text-white bg-black/70 backdrop-blur-sm px-2 py-0.5 rounded-full">
-        {rank}/{total}
-      </div>
-    </div>
-  );
-}
-
 
 export async function generateMetadata({
   params,
@@ -168,9 +122,7 @@ export async function generateMetadata({
   params: Promise<{ locale: string; city: string }>;
 }): Promise<Metadata> {
   const { locale, city } = await params;
-
   const cityName = city.replace(/-/g, " ");
-
   const title = `Independent Escorts in ${cityName} | Verified Local Profiles`;
   const description =
     `Discover verified, independent escorts in ${cityName}. Browse local profiles, view availability, and connect discreetly with trusted companions near you.`;
@@ -178,7 +130,6 @@ export async function generateMetadata({
   return {
     title,
     description,
-
     keywords: [
       `escort ${cityName}`,
       `escorts in ${cityName}`,
@@ -188,7 +139,6 @@ export async function generateMetadata({
       "verified escorts",
       "local companions",
     ],
-
     alternates: {
       canonical: `/${locale}/escorts/${city}`,
       languages: {
@@ -199,7 +149,6 @@ export async function generateMetadata({
         pt: `/pt/escorts/${city}`,
       },
     },
-
     openGraph: {
       title: `Independent Escorts in ${cityName}`,
       description:
@@ -226,7 +175,6 @@ export async function generateMetadata({
           : "en_US",
       type: "website",
     },
-
     twitter: {
       card: "summary_large_image",
       title: `Escorts in ${cityName} | Lovira`,
@@ -234,7 +182,6 @@ export async function generateMetadata({
         `Find independent and verified escorts in ${cityName}. Browse local profiles safely and discreetly.`,
       images: ["/favicon.png"],
     },
-
     robots: {
       index: true,
       follow: true,
@@ -251,11 +198,10 @@ export async function generateMetadata({
 
 export default async function CityEscortsPage({ params }: PageProps) {
   const { locale, city } = await params;
-  setStaticParamsLocale(locale); // ← CETTE LIGNE EST CRITIQUE
+  setStaticParamsLocale(locale);
   const t = await getScopedI18n('Escorts');
   const cityName = formatCityName(city);
   
-  // Récupérer les données côté serveur
   const ads = await getCityAds(city);
 
   const top3Ads = ads.slice(0, 3);
@@ -370,105 +316,17 @@ export default async function CityEscortsPage({ params }: PageProps) {
             </p>
           </div>
         ) : (
-          <>
-            {/* Grid des annonces avec rang */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {ads.map((ad) => (
-                <div key={ad.pending_ad_id} className="relative">
-                  <RankBadge rank={ad.rank} total={ads.length} />
-                  <EscortCard 
-                    city={city}
-                    adId={ad.pending_ad_id}
-                    ad={ad}
-                    showActions={true}
-                  />
-                  
-                  {/* Informations supplémentaires */}
-                  <div className="mt-2 flex justify-between items-center text-sm text-gray-400">
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        ad.rank <= 3 ? 'bg-amber-900/30 text-amber-300 border border-amber-800/50' :
-                        ad.rank <= 10 ? 'bg-blue-900/30 text-blue-300 border border-blue-800/50' :
-                        'bg-gray-800 text-gray-400 border border-gray-700'
-                      }`}>
-                        Position {ad.rank}/{ads.length}
-                      </span>
-                      {ad.city_boosted_at?.[city.toLowerCase()] && (
-                        <span className="px-2 py-1 bg-green-900/30 text-green-300 rounded-full text-xs border border-green-800/50">
-                          {t('CityPage.card.boosted')}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-xs text-gray-500">
-                      {t('CityPage.card.addedOn')} {new Date(ad.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Résumé du classement */}
-            {/* <div className="mt-12 p-6 bg-gray-800 rounded-2xl border border-gray-700 shadow-lg shadow-black/20">
-              <h3 className="text-lg font-bold text-white mb-4">{t('CityPage.about.title')}</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="font-semibold text-gray-200 mb-2">{t('CityPage.about.howRanked.title')}</h4>
-                  <ul className="space-y-2 text-gray-400 text-sm">
-                    <li className="flex items-start gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5"></div>
-                      <span>{t('CityPage.about.howRanked.recentlyBoosted')}</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5"></div>
-                      <span>{t('CityPage.about.howRanked.recentAds')}</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full mt-1.5"></div>
-                      <span>{t('CityPage.about.howRanked.boostDecay')}</span>
-                    </li>
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-200 mb-2">{t('CityPage.about.tips.title')}</h4>
-                  <ul className="space-y-2 text-gray-400 text-sm">
-                    <li className="flex items-start gap-2">
-                      <div className="w-5 h-5 bg-amber-900/50 rounded flex items-center justify-center text-amber-300 text-xs">1</div>
-                      <span>{t('CityPage.about.tips.useBoost')}</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="w-5 h-5 bg-amber-900/50 rounded flex items-center justify-center text-amber-300 text-xs">2</div>
-                      <span>{t('CityPage.about.tips.updateRegularly')}</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="w-5 h-5 bg-amber-900/50 rounded flex items-center justify-center text-amber-300 text-xs">3</div>
-                      <span>{t('CityPage.about.tips.addPhotos')}</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div> */}
-
-            {/* Pagination
-            {ads.length > 12 && (
-              <div className="flex justify-center items-center gap-2 mt-12">
-                <button className="px-6 py-3 bg-gray-800 border border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors shadow-lg shadow-black/20">
-                  {t('CityPage.pagination.previous')}
-                </button>
-                <div className="flex items-center gap-2">
-                  <span className="px-4 py-2 bg-purple-700 text-white rounded-lg font-medium">1</span>
-                  <span className="px-4 py-2 text-gray-400 hover:text-purple-300 cursor-pointer">2</span>
-                  <span className="px-4 py-2 text-gray-400 hover:text-purple-300 cursor-pointer">3</span>
-                  <span className="text-gray-600">...</span>
-                  <span className="px-4 py-2 text-gray-400 hover:text-purple-300 cursor-pointer">
-                    {Math.ceil(ads.length / 12)}
-                  </span>
-                </div>
-                <button className="px-6 py-3 bg-purple-700 text-white hover:bg-purple-600 rounded-lg transition-colors shadow-lg shadow-black/20">
-                  {t('CityPage.pagination.next')}
-                </button>
-              </div>
-            )} */}
-          </>
+          // ← Délègue tout l'affichage + "Voir plus" au composant client
+          <AdsGrid
+            ads={ads}
+            city={city}
+            loadMoreLabel={t('CityPage.load.loadMore') ?? 'Voir plus'}
+            showingLabel={t('CityPage.load.showing') ?? 'Affichage de'}
+            ofLabel={t('CityPage.load.of') ?? 'sur'}
+            adsLabel={t('CityPage.load.ads') ?? 'annonces'}
+            boostedLabel={t('CityPage.card.boosted') ?? 'Boosté'}
+            addedOnLabel={t('CityPage.card.addedOn') ?? 'Ajouté le'}
+          />
         )}
 
         {/* Villes voisines */}

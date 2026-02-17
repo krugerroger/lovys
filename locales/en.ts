@@ -597,7 +597,14 @@ export default {
       nearby: {
         title: "Explore other cities",
         viewAll: "View all cities →"
+      },
+      load: {
+        loadMore: "Load more",
+        showing: "Showing",
+        of: "of",
+        ads: "ads"
       }
+
     },
     ProfilePage: {
       // Header
