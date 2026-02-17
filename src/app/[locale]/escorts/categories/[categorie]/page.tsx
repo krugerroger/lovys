@@ -1,12 +1,12 @@
 // app/[locale]/escorts/categories/[categorie]/page.tsx
 import { availableCategories } from '@/app/[locale]/constants';
-import EscortCard from '@/components/EscortCard';
 import { createClient } from '@/lib/supabase/client';
 import { Tag, MapPin, Users, Filter, Check, Sparkles, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { getScopedI18n } from '../../../../../../locales/server';
 import { setStaticParamsLocale } from 'next-international/server';
 import { Metadata } from 'next';
+import CategoryAdsGrid from '@/components/Categoryadsgrid';
 
 // Fonction pour formater le nom de la catégorie (ALGORITHME - PAS TOUCHÉ)
 const formatCategoryName = (slug: string) => {
@@ -236,50 +236,12 @@ export default async function CategoryEscortsPage({ params }: PageProps) {
             </div>
           </div>
         ) : (
-          <>
-            {/* Grid des annonces */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {ads.map((ad) => (
-                <div key={ad.escort_id || ad.pending_ad_id || ad.id} className="relative group">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-600 to-purple-600 rounded-2xl blur opacity-0 group-hover:opacity-20 transition duration-1000 group-hover:duration-200"></div>
-                  <div className="relative">
-                    <EscortCard 
-                      ad={ad}
-                      adId={ad.pending_ad_id}
-                      city={ad.location.city}
-                      showActions={true}
-                    />
-                    {/* Badge de catégorie */}
-                    <div className="absolute top-3 left-3 z-10">
-                      <div className="px-3 py-1.5 bg-gray-900/90 backdrop-blur-sm rounded-full text-xs font-medium text-white flex items-center gap-1.5 border border-pink-500/30 shadow-lg">
-                        <Check className="w-3 h-3 text-green-400" />
-                        {categoryName}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Pagination */}
-            {ads.length > 12 && (
-              <div className="flex justify-center items-center gap-3 mt-12 pt-8 border-t border-gray-800/50">
-                <button className="px-4 py-2.5 bg-gray-800 border border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors text-sm shadow-lg">
-                  {t('CategoryPage.pagination.previous')}
-                </button>
-                <div className="flex items-center gap-1">
-                  <button className="w-9 h-9 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-lg text-sm shadow-lg">1</button>
-                  <button className="w-9 h-9 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm transition-colors">2</button>
-                  <button className="w-9 h-9 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm transition-colors">3</button>
-                  <span className="text-gray-600 mx-2">•••</span>
-                  <button className="w-9 h-9 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm transition-colors">5</button>
-                </div>
-                <button className="px-4 py-2.5 bg-gradient-to-r from-pink-600 to-purple-600 text-white hover:opacity-90 rounded-lg transition-opacity text-sm shadow-lg">
-                  {t('CategoryPage.pagination.next')}
-                </button>
-              </div>
-            )}
-          </>
+          // ← Délègue tout l'affichage + "Voir plus" au composant client
+          <CategoryAdsGrid
+            ads={ads}
+            categoryName={categoryName}
+            locale={locale}
+          />
         )}
 
         {/* Catégories similaires */}
