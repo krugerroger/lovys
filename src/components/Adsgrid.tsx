@@ -35,7 +35,7 @@ function RankBadge({ rank, total }: { rank: number; total: number }) {
 
   return (
     <div className="absolute top-3 left-3 z-20 flex flex-col items-center gap-1">
-      <div className={`bg-gradient-to-br ${getRankColor()} px-3 py-1.5 rounded-full font-bold text-sm flex items-center gap-1 shadow-lg shadow-black/30`}>
+      <div className={`bg-linear-to-br ${getRankColor()} px-3 py-1.5 rounded-full font-bold text-sm flex items-center gap-1 shadow-lg shadow-black/30`}>
         {getRankIcon()}
         <span>{getRankText()}</span>
       </div>
@@ -143,7 +143,7 @@ export default function AdsGrid({
           {/* Barre de progression */}
           <div className="w-full max-w-xs bg-gray-700 rounded-full h-1.5">
             <div
-              className="bg-gradient-to-r from-purple-500 to-pink-500 h-1.5 rounded-full transition-all duration-500"
+              className="bg-linear-to-r from-purple-500 to-pink-500 h-1.5 rounded-full transition-all duration-500"
               style={{ width: `${(visibleCount / ads.length) * 100}%` }}
             />
           </div>
@@ -155,7 +155,7 @@ export default function AdsGrid({
           <button
             onClick={handleLoadMore}
             disabled={isLoading}
-            className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-purple-700 to-pink-700 hover:from-purple-600 hover:to-pink-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-purple-900/40 hover:shadow-purple-900/60 hover:-translate-y-0.5 active:translate-y-0"
+            className="flex items-center gap-2 px-8 py-3 bg-linear-to-r from-purple-700 to-pink-700 hover:from-purple-600 hover:to-pink-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-purple-900/40 hover:shadow-purple-900/60 hover:-translate-y-0.5 active:translate-y-0"
           >
             {isLoading ? (
               <>
@@ -176,7 +176,7 @@ export default function AdsGrid({
       {!hasMore && ads.length > PAGE_SIZE && (
         <div className="flex flex-col items-center gap-2 mt-10">
           <div className="w-full max-w-xs bg-gray-700 rounded-full h-1.5">
-            <div className="bg-gradient-to-r from-purple-500 to-pink-500 h-1.5 rounded-full w-full" />
+            <div className="bg-linear-to-r from-purple-500 to-pink-500 h-1.5 rounded-full w-full" />
           </div>
           <p className="text-sm text-gray-400 mt-1">
             ✓ Toutes les {ads.length} annonces affichées
