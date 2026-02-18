@@ -33,6 +33,12 @@ export const metadata: Metadata = {
     "verified escorts",
     "escort directory",
     "adult companionship",
+    "escort paris",
+    "escort lille",
+    "escort lyon",
+    "escort marseille",
+    "escort toulouse",
+    "discreet escort platform",
     "escort booking platform",
   ],
 

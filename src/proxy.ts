@@ -4,7 +4,7 @@ import { createI18nMiddleware } from 'next-international/middleware'
 import { createServerClient } from '@supabase/ssr'
 
 const I18nMiddleware = createI18nMiddleware({
-  locales: ['en', 'fr', 'de', 'es', 'pt'],
+  locales: ['en', 'fr', 'de', 'es','pt'],
   defaultLocale: 'fr',
   urlMappingStrategy: 'redirect',
 })
@@ -58,7 +58,7 @@ const adminRoutes = [
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // 1. D'abord vérifier les routes publiques
+  // 1. D'abord vérifier les routes qui sont publiques
   if (PUBLIC_ROUTES.some(route => {
     const normalizedPath = pathname.replace(/\/$/, '')
     const normalizedRoute = route.replace(/\/$/, '')

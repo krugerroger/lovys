@@ -204,7 +204,7 @@ export default function LadysOneHome() {
       <AgeGate />
       <Header/>
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-r from-pink-900/20 via-purple-900/20 to-blue-900/20 py-16">
+      <div className="relative bg-linear-to-r from-pink-900/20 via-purple-900/20 to-blue-900/20 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
@@ -339,7 +339,7 @@ export default function LadysOneHome() {
                 <button
                   onClick={() => handleSearch()}
                   disabled={!selectedCity}
-                  className="w-full py-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold rounded-xl hover:opacity-90 transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-linear-to-r from-pink-500 to-purple-600 text-white font-bold rounded-xl hover:opacity-90 transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
                 >
                   {selectedCity ? t('search.searchButton.withCity', { city: selectedCity.toUpperCase() }) : t('search.searchButton.withoutCity')}
                   <Search className="w-5 h-5" />
@@ -432,7 +432,7 @@ export default function LadysOneHome() {
               
               <Link 
                 href="/escorts" 
-                className="block w-full py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold rounded-xl hover:opacity-90 transition text-center"
+                className="block w-full py-3 bg-linear-to-r from-pink-500 to-purple-600 text-white font-bold rounded-xl hover:opacity-90 transition text-center"
               >
                 {t('popularCities.exploreAll')}
               </Link>
