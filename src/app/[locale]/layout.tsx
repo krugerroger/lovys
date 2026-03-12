@@ -19,27 +19,27 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Lovira | Find Local Independent Escorts Near You",
+    default: "Lovira | Trouvez des Escortes Indépendantes Près de Vous",
     template: "%s | Lovira",
   },
 
   description:
-    "Lovira helps you find verified, independent escorts near you. Browse local profiles, choose your city, and connect safely with trusted companions.",
+    "Lovira vous aide à trouver des escortes indépendantes et vérifiées près de chez vous. Parcourez les profils locaux, choisissez votre ville et connectez-vous en toute sécurité avec des accompagnatrices de confiance.",
 
   keywords: [
-    "escort near me",
-    "local escort services",
-    "independent escorts",
-    "verified escorts",
-    "escort directory",
-    "adult companionship",
-    "escort paris",
-    "escort lille",
-    "escort lyon",
-    "escort marseille",
-    "escort toulouse",
-    "discreet escort platform",
-    "escort booking platform",
+    "escorte près de moi",
+    "services d'escorte locaux",
+    "escortes indépendantes",
+    "escortes vérifiées",
+    "annuaire d'escortes",
+    "accompagnement adulte",
+    "escorte paris",
+    "escorte lille",
+    "escorte lyon",
+    "escorte marseille",
+    "escorte toulouse",
+    "plateforme d'escorte discrète",
+    "plateforme de réservation d'escortes",
   ],
 
   applicationName: "Lovira",
@@ -61,9 +61,9 @@ export const metadata: Metadata = {
   },
 
   openGraph: {
-    title: "Lovira | Find Local Independent Escorts Near You",
+    title: "Lovira | Trouvez des Escortes Indépendantes Près de Vous",
     description:
-      "Discover trusted, independent escorts near your location. Browse profiles, cities, and connect discreetly with Lovira.",
+      "Découvrez des escortes indépendantes et de confiance près de chez vous. Parcourez les profils, les villes et connectez-vous discrètement avec Lovira.",
     url: "https://lovira.one",
     siteName: "Lovira",
     images: [
@@ -71,18 +71,18 @@ export const metadata: Metadata = {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Lovira escort directory",
+        alt: "Annuaire d'escortes Lovira",
       },
     ],
-    locale: "en_US",
+    locale: "fr_FR",
     type: "website",
   },
 
   twitter: {
     card: "summary_large_image",
-    title: "Lovira | Local Independent Escorts",
+    title: "Lovira | Escortes Indépendantes Locales",
     description:
-      "Find verified independent escorts near you. Safe, discreet, and location-based browsing.",
+      "Trouvez des escortes indépendantes et vérifiées près de chez vous. Navigation sécurisée, discrète et géolocalisée.",
     images: ["/favicon.png"],
   },
 

@@ -1,7 +1,7 @@
 "use client";
 // app/[locale]/page.tsx
 import React, { useEffect, useState } from 'react';
-import { MapPin, Search, Heart, Phone, Star, Shield, TrendingUp, X, ChevronDown, Clock } from 'lucide-react';
+import { MapPin, Search, Heart, Star, Shield, TrendingUp, X, ChevronDown, Clock } from 'lucide-react';
 import Header from '@/components/Header';
 import Link from 'next/link';
 import { PreviewAdData } from '@/types/adsForm';
@@ -10,7 +10,6 @@ import EscortCard from '@/components/EscortCard';
 import { frenchCities, languages, categories, popularCities } from './constants';
 import { useRouter } from 'next/navigation';
 import { useScopedI18n } from '../../../locales/client';
-import { LocaleSelect } from '@/components/LocaleSelect';
 import AgeGate from '@/components/AgeGate';
 
 // Helper function to slugify city names

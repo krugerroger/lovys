@@ -8,8 +8,14 @@ import { setStaticParamsLocale } from 'next-international/server';
 import { Metadata } from 'next';
 import AdsGrid from '@/components/Adsgrid';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 3600; // Revalider les données toutes les heures
+
+export async function generateStaticParams() {
+  return popularCitySlugs.map((city) => ({
+    city,
+    locale: 'fr',
+  }));
+}
 
 // Fonction pour formater le slug en nom de ville
 const formatCityName = (slug: string) => {
@@ -123,36 +129,36 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale, city } = await params;
   const cityName = city.replace(/-/g, " ");
-  const title = `Independent Escorts in ${cityName} | Verified Local Profiles`;
+  const title = `Escortes Indépendantes à ${cityName} | Profils Locaux Vérifiés`;
   const description =
-    `Discover verified, independent escorts in ${cityName}. Browse local profiles, view availability, and connect discreetly with trusted companions near you.`;
+    `Découvrez des escortes indépendantes et vérifiées à ${cityName}. Parcourez les profils locaux, consultez les disponibilités et connectez-vous discrètement avec des accompagnatrices de confiance près de chez vous.`;
 
   return {
     title,
     description,
     keywords: [
-      `escort ${cityName}`,
-      `escorts in ${cityName}`,
-      `independent escorts ${cityName}`,
-      `local escort services ${cityName}`,
-      "escort directory",
-      "verified escorts",
-      "local companions",
+      `escorte ${cityName}`,
+      `escortes à ${cityName}`,
+      `escortes indépendantes ${cityName}`,
+      `services d'escorte locaux ${cityName}`,
+      "annuaire d'escortes",
+      "escortes vérifiées",
+      "accompagnatrices locales",
     ],
     alternates: {
-      canonical: `/${locale}/escorts/${city}`,
+      canonical: `https://lovira.one/${locale}/escorts/${city}`,
       languages: {
         en: `/en/escorts/${city}`,
-        fr: `/fr/escortes/${city}`,
+        fr: `/fr/escorts/${city}`,
         de: `/de/escorts/${city}`,
         es: `/es/escorts/${city}`,
         pt: `/pt/escorts/${city}`,
       },
     },
     openGraph: {
-      title: `Independent Escorts in ${cityName}`,
+      title: `Escortes Indépendantes à ${cityName}`,
       description:
-        `Browse trusted and verified independent escorts in ${cityName}. Location-based profiles and discreet connections.`,
+        `Parcourez des escortes indépendantes et vérifiées à ${cityName}. Profils géolocalisés et mises en relation discrètes.`,
       url: `https://lovira.one/${locale}/escorts/${city}`,
       siteName: "Lovira",
       images: [
@@ -160,7 +166,7 @@ export async function generateMetadata({
           url: "/favicon.png",
           width: 1200,
           height: 630,
-          alt: `Independent escorts in ${cityName}`,
+          alt: `Escortes indépendantes à ${cityName}`,
         },
       ],
       locale:
@@ -177,9 +183,9 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: `Escorts in ${cityName} | Lovira`,
+      title: `Escortes à ${cityName} | Lovira`,
       description:
-        `Find independent and verified escorts in ${cityName}. Browse local profiles safely and discreetly.`,
+        `Trouvez des escortes indépendantes et vérifiées à ${cityName}. Parcourez les profils locaux en toute sécurité et discrétion.`,
       images: ["/favicon.png"],
     },
     robots: {
