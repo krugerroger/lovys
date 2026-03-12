@@ -308,6 +308,6 @@ export const config = {
      - _next (image, static, etc.)
      - fichiers publics (png, jpg, svg, ico, etc.)
     */
-    '/((?!api|_next|favicon.ico|robots.txt|.*\\.(?:png|jpg|jpeg|svg|webp|ico)).*)',
+    '/((?!api|_next|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:png|jpg|jpeg|svg|webp|ico)).*)',
   ],
 }
