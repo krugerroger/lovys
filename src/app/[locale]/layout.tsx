@@ -68,7 +68,7 @@ export const metadata: Metadata = {
     siteName: "Lovira",
     images: [
       {
-        url: "/og-image.jpg",
+        url: "/lovira1.png",
         width: 1200,
         height: 630,
         alt: "Annuaire d'escortes Lovira",
