@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { Edit, ArrowUp, MapPin, Clock, Crown, TrendingUp, Star, BarChart, AlertCircle, Loader2, Trash2 } from 'lucide-react'
+import { Edit, ArrowUp, MapPin, Clock, Crown, TrendingUp, Star, BarChart, AlertCircle, Trash2 } from 'lucide-react'
 import { useUser } from '@/app/[locale]/context/userContext'
 import { toast } from 'sonner'
 import { useRouter, useParams } from 'next/navigation'
@@ -48,76 +48,31 @@ export default function ModelManagementPage() {
     return pendingAd?.pending_ad_id
   }
 
-  // Récupérer TOUTES les annonces de la ville
-  const fetchAdsDirectly = async (): Promise<any[]> => {
-    try {
-      const supabase = createClient()
-      const normalizedCity = city.toLowerCase()
-      
-      const { data, error } = await supabase
-        .from('pending_ads')
-        .select('*')
-        .eq('status', 'approved')
-
-      if (error) {
-        console.error('Supabase error:', error)
-        throw error
-      }
-
-      // Filtrer pour la ville spécifique
-      const filteredAds = (data || []).filter((ad: any) => {
-        if (!ad || !ad.location) return false
-
-        const adCity = ad.location.city
-        
-        // Si c'est un tableau
-        if (Array.isArray(adCity)) {
-          return adCity.some((c: string) => 
-            String(c).toLowerCase().includes(normalizedCity)
-          )
-        }
-        
-        // Si c'est une string
-        if (typeof adCity === 'string') {
-          return adCity.toLowerCase().includes(normalizedCity)
-        }
-        
-        return false
-      })
-
-      return filteredAds
-    } catch (error) {
-      console.error('Direct Supabase fetch failed:', error)
-      throw error
-    }
-  }
-
-  // Nouvelle logique de tri SIMPLE
+  // ✅ Tri EXACTEMENT comme dans [city]/page.tsx
   const calculateSortedAds = (ads: any[]): any[] => {
     if (ads.length === 0) return []
     
     const normalizedCity = city.toLowerCase()
     
-    // Trier selon la logique simple
     return [...ads].sort((a, b) => {
-        // Pour l'annonce A : prendre la date la plus récente
-      const aBoostedAt = a.city_boosted_at?.[normalizedCity];
-      const aCreatedAt = new Date(a.created_at).getTime();
-      const aBoostedAtTime = aBoostedAt ? new Date(aBoostedAt).getTime() : 0;
-      const aLatestDate = Math.max(aCreatedAt, aBoostedAtTime);
+      // Pour l'annonce A : prendre la date la plus récente
+      const aBoostedAt = a.city_boosted_at?.[normalizedCity]
+      const aCreatedAt = new Date(a.created_at).getTime()
+      const aBoostedAtTime = aBoostedAt ? new Date(aBoostedAt).getTime() : 0
+      const aLatestDate = Math.max(aCreatedAt, aBoostedAtTime)
       
       // Pour l'annonce B : prendre la date la plus récente
-      const bBoostedAt = b.city_boosted_at?.[normalizedCity];
-      const bCreatedAt = new Date(b.created_at).getTime();
-      const bBoostedAtTime = bBoostedAt ? new Date(bBoostedAt).getTime() : 0;
-      const bLatestDate = Math.max(bCreatedAt, bBoostedAtTime);
+      const bBoostedAt = b.city_boosted_at?.[normalizedCity]
+      const bCreatedAt = new Date(b.created_at).getTime()
+      const bBoostedAtTime = bBoostedAt ? new Date(bBoostedAt).getTime() : 0
+      const bLatestDate = Math.max(bCreatedAt, bBoostedAtTime)
       
       // Trier par date la plus récente d'abord
-      return bLatestDate - aLatestDate;
+      return bLatestDate - aLatestDate
     })
   }
 
-  // Calculer la position
+  // ✅ Calculer la position avec la bonne requête Supabase
   const calculatePosition = async () => {
     if (!pendingAd || !city) return
 
@@ -125,45 +80,92 @@ export default function ModelManagementPage() {
     setApiError(null)
     
     try {
-      const ads = await fetchAdsDirectly()
+      const supabase = createClient()
+      
+      // ✅ FIX: Utiliser .ilike() au lieu de .eq() pour la correspondance partielle
+      const { data: ads, error } = await supabase
+        .from('pending_ads')
+        .select('pending_ad_id, created_at, city_boosted_at, escort_id')
+        .eq('status', 'approved')
+        .ilike('location->>city', `%${city}%`)  // ← EXACTEMENT comme getCityAds
+
+      if (error) {
+        console.error('❌ Supabase error:', error)
+        throw error
+      }
+
+      console.log(`📊 Annonces récupérées pour ${city}:`, ads?.length || 0)
+
+      // ✅ Filtrage blacklist (comme dans getCityAds)
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      let filteredAds = ads || []
+      
+      if (currentUser?.id && filteredAds.length > 0) {
+        const escortIds = filteredAds.map(ad => ad.escort_id).filter(Boolean)
+        
+        if (escortIds.length > 0) {
+          const { data: blacklistEntries } = await supabase
+            .from('escort_blacklist')
+            .select('escort_id')
+            .eq('blocked_user_id', currentUser.id)
+            .in('escort_id', escortIds)
+          
+          if (blacklistEntries && blacklistEntries.length > 0) {
+            const blockedEscortIds = new Set(blacklistEntries.map(entry => entry.escort_id))
+            const beforeBlacklist = filteredAds.length
+            filteredAds = filteredAds.filter(ad => 
+              !ad.escort_id || !blockedEscortIds.has(ad.escort_id)
+            )
+            console.log(`🚫 Blacklist appliquée: ${beforeBlacklist} → ${filteredAds.length}`)
+          }
+        }
+      }
       
       // Vérifier si notre annonce est dans la liste
       const currentAdId = getAdId()
       
-      const isOurAdInList = ads.some((ad: any) => ad.pending_ad_id === currentAdId)
+      const isOurAdInList = filteredAds.some((ad: any) => ad.pending_ad_id === currentAdId)
       
-      if (ads.length === 0 || !isOurAdInList) {
+      console.log(`🔍 Notre annonce (${currentAdId}) est dans la liste:`, isOurAdInList)
+      
+      if (filteredAds.length === 0 || !isOurAdInList) {
+        console.log('⚠️ Annonce non trouvée ou liste vide')
         setPositionInfo({
           position: 0,
-          total: ads.length,
+          total: filteredAds.length,
           isInTop3: false,
           isInTop10: false
         })
+        setLoadingAds(false)
         return
       }
       
-      // Trier les annonces selon la nouvelle logique
-      const sortedAds = calculateSortedAds(ads)
+      // Trier les annonces selon la logique
+      const sortedAds = calculateSortedAds(filteredAds)
       
       // Trouver la position de notre annonce
       const positionIndex = sortedAds.findIndex((ad: any) => 
         ad.pending_ad_id === currentAdId
       )
 
+      console.log(`📊 Position trouvée: index=${positionIndex}, position=${positionIndex + 1}/${sortedAds.length}`)
       
       if (positionIndex === -1) {
+        console.log('⚠️ Annonce non trouvée après tri')
         setPositionInfo({
           position: 0,
           total: sortedAds.length,
           isInTop3: false,
           isInTop10: false
         })
+        setLoadingAds(false)
         return
       }
 
       const position = positionIndex + 1
       const total = sortedAds.length
       
+      console.log(`✅ Position finale: #${position}/${total}`)
       
       setPositionInfo({
         position,
@@ -171,8 +173,9 @@ export default function ModelManagementPage() {
         isInTop3: position <= 3,
         isInTop10: position <= 10
       })
+      
     } catch (error) {
-      console.error('Error calculating position:', error)
+      console.error('❌ Error calculating position:', error)
       setApiError(
         error instanceof Error 
           ? error.message 
@@ -254,44 +257,44 @@ export default function ModelManagementPage() {
   }
 
   const handleDeleteAd = async () => {
-  if (!pendingAd?.pending_ad_id) {
-    toast.error(t('messages.deleteError'))
-    return
-  }
+    if (!pendingAd?.pending_ad_id) {
+      toast.error(t('messages.deleteError'))
+      return
+    }
 
-  setLoading(true)
-  try {
-    const res = await fetch(`/api/ads/delete/${pendingAd.pending_ad_id}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/ads/delete/${pendingAd.pending_ad_id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || `Erreur ${res.status}`)
       }
-    })
 
-    const data = await res.json()
-
-    if (!res.ok) {
-      throw new Error(data.error || `Erreur ${res.status}`)
+      if (data.success) {
+        toast.success(t('messages.deleteSuccess'))
+        router.push('/manage/chat/threads')
+      } else {
+        throw new Error(data.error || t('messages.deleteGenericError'))
+      }
+    } catch (error) {
+      console.error('Delete error:', error)
+      toast.error(
+        error instanceof Error 
+          ? error.message 
+          : t('messages.deleteConnectionError')
+      )
+    } finally {
+      setLoading(false)
     }
-
-    if (data.success) {
-      toast.success(t('messages.deleteSuccess'))
-      // Rediriger vers la liste des annonces
-      router.push('/manage/chat/threads')
-    } else {
-      throw new Error(data.error || t('messages.deleteGenericError'))
-    }
-  } catch (error) {
-    console.error('Delete error:', error)
-    toast(
-      error instanceof Error 
-        ? error.message 
-        : t('messages.deleteConnectionError')
-    )
-  } finally {
-    setLoading(false)
   }
-}
+
   // Formatage du temps écoulé
   const formatTimeAgo = (timestamp: string) => {
     try {
@@ -324,20 +327,6 @@ export default function ModelManagementPage() {
       if (position <= 3) return <TrendingUp className="w-5 h-5" />
       if (position <= 10) return <Star className="w-5 h-5" fill="currentColor" />
       return <BarChart className="w-5 h-5" />
-    }
-
-    const getRankText = () => {
-      if (position === 1) return t('rank.topOne')
-      if (position === 2) return t('rank.topTwo')
-      if (position === 3) return t('rank.topThree')
-      if (position <= 10) return `${t('rank.topNumber')} ${position}`
-      return `#${position}`
-    }
-
-    const getStatusText = () => {
-      if (position <= 3) return t('rank.excellent')
-      if (position <= 10) return t('rank.good')
-      return t('rank.toImprove')
     }
 
     return (
@@ -401,7 +390,6 @@ export default function ModelManagementPage() {
     )
   }
 
-  // Mettez à jour la section "Comment ça marche" pour refléter la nouvelle logique
   const updateHowItWorks = () => {
     return (
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
@@ -439,7 +427,7 @@ export default function ModelManagementPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100  min-md:p-8">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 min-md:p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="bg-gradient-to-r from-pink-500 to-purple-600 rounded-2xl p-6 mb-8 shadow-lg">
@@ -574,50 +562,49 @@ export default function ModelManagementPage() {
               <h2 className="text-xl font-bold text-gray-800 mb-4">
                 {t('actions.title')}
               </h2>
-                <div className="space-y-4">
-                  <button
-                    onClick={() => router.push(`/manage/ads/${city}/${pendingAd?.pending_ad_id}/update`)}
-                    className="w-full p-4 bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 hover:border-green-300 hover:shadow-md transition-all duration-300 flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                        <Edit className="w-5 h-5 text-green-600" />
-                      </div>
-                      <div className="text-left">
-                        <p className="font-semibold text-gray-800">
-                          {t('actions.editProfile')}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {t('actions.editDescription')}
-                        </p>
-                      </div>
+              <div className="space-y-4">
+                <button
+                  onClick={() => router.push(`/manage/ads/${city}/${pendingAd?.pending_ad_id}/update`)}
+                  className="w-full p-4 bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 hover:border-green-300 hover:shadow-md transition-all duration-300 flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                      <Edit className="w-5 h-5 text-green-600" />
                     </div>
-                  </button>
+                    <div className="text-left">
+                      <p className="font-semibold text-gray-800">
+                        {t('actions.editProfile')}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {t('actions.editDescription')}
+                      </p>
+                    </div>
+                  </div>
+                </button>
 
-                  {/* NOUVEAU BOUTON SUPPRIMER */}
-                  <button
-                    onClick={handleDeleteAd}
-                    disabled={loading}
-                    className="w-full p-4 bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 hover:border-red-300 hover:shadow-md transition-all duration-300 flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                        <Trash2 className="w-5 h-5 text-red-600" />
-                      </div>
-                      <div className="text-left">
-                        <p className="font-semibold text-gray-800">
-                          {t('actions.deleteAd')}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {t('actions.deleteDescription')}
-                        </p>
-                      </div>
+                <button
+                  onClick={handleDeleteAd}
+                  disabled={loading}
+                  className="w-full p-4 bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 hover:border-red-300 hover:shadow-md transition-all duration-300 flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                      <Trash2 className="w-5 h-5 text-red-600" />
                     </div>
-                    {loading && (
-                      <div className="w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                    )}
-                  </button>
-                </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-gray-800">
+                        {t('actions.deleteAd')}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {t('actions.deleteDescription')}
+                      </p>
+                    </div>
+                  </div>
+                  {loading && (
+                    <div className="w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -703,7 +690,7 @@ export default function ModelManagementPage() {
               </div>
             </div>
 
-            {/* Comment ça marche (version mise à jour) */}
+            {/* Comment ça marche */}
             {updateHowItWorks()}
           </div>
         </div>

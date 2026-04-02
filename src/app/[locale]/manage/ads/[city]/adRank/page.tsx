@@ -86,7 +86,7 @@ export default function CityRankingPage() {
   }
 
   const normalizeCityName = (city: string): string => {
-    return city.toLowerCase().trim()
+    return city.toLowerCase()
   }
 
   const fetchApprovedAdsForCity = async (city: string): Promise<PreviewAdData[]> => {
@@ -98,6 +98,7 @@ export default function CityRankingPage() {
         .from('pending_ads')
         .select('*')
         .eq('status', 'approved')
+        .ilike('location->>city', `%${normalizedCity}%`)
 
       if (error) throw error
 

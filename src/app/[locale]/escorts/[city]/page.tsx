@@ -94,17 +94,17 @@ async function getCityAds(cityName: string) {
       return bLatestDate - aLatestDate;
     });
 
-    console.log('=== TRI DES ANNONCES ===');
+    // console.log('=== TRI DES ANNONCES ===');
     sortedAds.forEach((ad, index) => {
       const boostedAt = ad.city_boosted_at?.[normalizedCity];
       const createdTime = new Date(ad.created_at).getTime();
       const boostTime = boostedAt ? new Date(boostedAt).getTime() : 0;
       const latestTime = Math.max(createdTime, boostTime);
-      console.log(`${index + 1}. ${ad.title}`);
-      console.log(`   Créée: ${ad.created_at} (${new Date(createdTime).toLocaleString()})`);
-      console.log(`   Boost: ${boostedAt || 'Non'} (${boostTime ? new Date(boostTime).toLocaleString() : 'N/A'})`);
-      console.log(`   Date utilisée: ${new Date(latestTime).toLocaleString()}`);
-      console.log('---');
+      // console.log(`${index + 1}. ${ad.title}`);
+      // console.log(`   Créée: ${ad.created_at} (${new Date(createdTime).toLocaleString()})`);
+      // console.log(`   Boost: ${boostedAt || 'Non'} (${boostTime ? new Date(boostTime).toLocaleString() : 'N/A'})`);
+      // console.log(`   Date utilisée: ${new Date(latestTime).toLocaleString()}`);
+      // console.log('---');
     });
 
     const adsWithRank = sortedAds.map((ad, index) => ({

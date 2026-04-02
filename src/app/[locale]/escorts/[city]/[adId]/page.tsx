@@ -424,7 +424,7 @@ export default async function EscortProfilePage({ params }: PageProps) {
                   </div>
                 )}
                 
-                {ad.email && (
+                {/* {ad.email && (
                   <div className="flex items-center gap-3 p-3 bg-gray-900/50 rounded-lg">
                     <Mail className="w-5 h-5 text-pink-400" />
                     <div>
@@ -432,7 +432,7 @@ export default async function EscortProfilePage({ params }: PageProps) {
                       <p className="font-medium">{ad.email}</p>
                     </div>
                   </div>
-                )}
+                )} */}
                 {ad.contacts?.whatsapp && (
                   <div className="flex items-center gap-3 p-3 bg-gray-900/50 rounded-lg">
                     <MessageCircle className="w-5 h-5 text-pink-400" />
